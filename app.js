@@ -21,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // Función para abrir el formulario
+// Función para abrir el formulario
 document.getElementById('makeOrderBtn').addEventListener('click', () => {
     document.getElementById('orderForm').style.display = 'flex';
 });
@@ -44,10 +45,10 @@ document.getElementById('orderFormContent').addEventListener('submit', (event) =
     const notes = document.getElementById('notes').value;
 
     // Referencia a la base de datos de Firebase
-    const newOrderRef = db.ref('pedidos').push();
+    const newOrderRef = push(ref(db, 'pedidos'));
 
     // Agregar el pedido a Firebase
-    newOrderRef.set({
+    set(newOrderRef, {
         client,
         number,
         date,
@@ -93,7 +94,7 @@ document.getElementById('orderFormContent').addEventListener('submit', (event) =
         const newStatus = e.target.value;
 
         // Actualizar el estado del pedido en Firebase
-        db.ref(`pedidos/${orderId}`).update({ status: newStatus });
+        update(ref(db, `pedidos/${orderId}`), { status: newStatus });
 
         // Eliminar la fila si el pedido está entregado o no entregado
         if (newStatus === "Entregado" || newStatus === "No Entregado") {
@@ -111,7 +112,7 @@ document.addEventListener('click', (event) => {
 
         if (newNotes !== null) {
             // Actualizar las notas en Firebase
-            db.ref(`pedidos/${orderId}`).update({ notes: newNotes });
+            update(ref(db, `pedidos/${orderId}`), { notes: newNotes });
 
             // Actualizar la UI con las nuevas notas
             const row = event.target.closest('tr');
@@ -120,79 +121,3 @@ document.addEventListener('click', (event) => {
         }
     }
 });
-
-// Manejo de la navegación mediante teclado entre tablas y el botón "Agregar Pedido"
-const tables = document.querySelectorAll(".table-container table");
-const addOrderButton = document.getElementById("makeOrderBtn");
-let currentFocusIndex = 0;
-let inTableNavigation = false;
-
-// Configurar tablas y botón para ser enfocados
-tables.forEach(table => table.setAttribute("tabindex", "0"));
-addOrderButton.setAttribute("tabindex", "0");
-
-document.addEventListener("keydown", (e) => {
-    if (!inTableNavigation) {
-        if (e.key === "ArrowLeft") {
-            e.preventDefault();
-            moveFocus(-1); // Mover entre tablas
-        }
-        if (e.key === "ArrowRight") {
-            e.preventDefault();
-            moveFocus(1); // Mover entre tablas
-        }
-        if (e.key === "Enter" && (document.activeElement.tagName === "TABLE" || document.activeElement === addOrderButton)) {
-            e.preventDefault();
-            if (document.activeElement.tagName === "TABLE") {
-                inTableNavigation = true;
-                document.activeElement.querySelector("tbody tr:first-child")?.focus(); // Foco al primer elemento de la tabla
-            } else {
-                addOrderButton.click(); // Hacer click en el botón de "Agregar pedido"
-            }
-        }
-    } else {
-        if (e.key === "ArrowUp") {
-            e.preventDefault();
-            navigateTable(-1); // Moverse hacia arriba en las filas de la tabla
-        }
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            navigateTable(1); // Moverse hacia abajo en las filas de la tabla
-        }
-        if (e.key === "Escape") {
-            e.preventDefault();
-            inTableNavigation = false;
-            tables[currentFocusIndex].blur(); // Salir de la tabla y volver al botón de agregar pedido
-        }
-    }
-});
-
-// Cambiar el foco entre las tablas y el botón
-function moveFocus(step) {
-    currentFocusIndex = (currentFocusIndex + step + tables.length + 1) % (tables.length + 1);
-    if (currentFocusIndex === tables.length) {
-        addOrderButton.focus(); // Si el índice es el final (el botón), mueve el foco allí
-    } else {
-        tables[currentFocusIndex].focus(); // Mueve el foco a la tabla seleccionada
-    }
-}
-
-// Navegar dentro de la tabla seleccionada
-function navigateTable(direction) {
-    const table = document.activeElement.closest("table"); // Obtenemos la tabla activa
-    const rows = Array.from(table.querySelectorAll("tbody tr")); // Filas dentro de la tabla
-    const currentRow = document.activeElement.closest("tr"); // Fila actual
-    const currentIndex = rows.indexOf(currentRow); // Índice de la fila actual
-    const nextIndex = currentIndex + direction; // Índice de la siguiente fila (arriba o abajo)
-
-    if (nextIndex >= 0 && nextIndex < rows.length) {
-        rows[nextIndex].focus(); // Cambiar el foco a la siguiente fila
-    }
-}
-
-// Hacer las filas enfocables para facilitar la navegación
-tables.forEach(table => {
-    table.querySelectorAll("tbody tr").forEach(row => {
-        row.setAttribute("tabindex", "-1"); // Hacer que las filas sean enfocables
-    });
-});// Obtener referencia a la base de dato
