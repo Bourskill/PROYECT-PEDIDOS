@@ -1,7 +1,9 @@
 
 // Importar Firebase y los servicios que necesitamos
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js';
-import { getDatabase, ref, set, get, child } from 'https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js';
+// Importar Firebase y los servicios que necesitamos
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js'; // Versión específica
+import { getDatabase, ref, set, get, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js'; // Versión específica
+
 
 // Configuración de Firebase
 const firebaseConfig = {
