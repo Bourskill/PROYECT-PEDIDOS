@@ -1,6 +1,6 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue  } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, update   } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 
 // Configuración de Firebase
@@ -106,10 +106,13 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
   
     // Detectar cambios en el estado del pedido y eliminar filas si corresponde
     row.querySelector('.order-status').addEventListener('change', (e) => {
-      if (e.target.value === "Entregado" || e.target.value === "No Entregado") {
-        row.remove();
-        notesRow.remove();
-      }
+      const status = e.target.value;
+      update(ref(db, `pedidos/${orderId}`), { status }).then(() => {
+        if (status === "Entregado" || status === "No Entregado") {
+          row.remove();
+          notesRow.remove();
+        }
+      });
     });
   
     // Agregar listener a las notas para editarlas
@@ -122,8 +125,7 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
         notesCell.textContent = newNotes || "Sin notas";
   
         // Actualizar las notas en Firebase en tiempo real
-        const orderRef = ref(db, `pedidos/${orderId}`);
-        set(orderRef, { ...notesRow, notes: newNotes || "Sin notas" });
+        update(ref(db, `pedidos/${orderId}`), { notes: newNotes || "Sin notas" });
       }
     });
   }
@@ -134,6 +136,9 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
     onValue(ordersRef, (snapshot) => {
       const orders = snapshot.val();
       if (orders) {
+        // Limpiar las tablas antes de cargar los pedidos
+        document.querySelectorAll('.table-container tbody').forEach(tbody => tbody.innerHTML = '');
+  
         Object.keys(orders).forEach(orderId => {
           const order = orders[orderId];
           addOrderToTable(orderId, order.client, order.number, order.date, order.time, order.category, order.comanda, order.person, order.notes);
