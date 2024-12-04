@@ -18,8 +18,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Función para agregar un pedido
-document.getElementById('orderFormContent').addEventListener('submit', (event) => {
+// Función para mostrar/ocultar el formulario de agregar pedido
+document.getElementById('makeOrderBtn').addEventListener('click', () => {
+    const form = document.getElementById('orderForm');
+    form.style.display = form.style.display === 'block' ? 'none' : 'block';
+  });
+  
+  // Función para agregar un pedido a Firebase
+  document.getElementById('orderFormContent').addEventListener('submit', (event) => {
     event.preventDefault();
   
     const client = document.getElementById('client').value;
@@ -108,11 +114,13 @@ document.getElementById('orderFormContent').addEventListener('submit', (event) =
       const newNotes = prompt('Editar notas:', notesCell.textContent.trim());
       if (newNotes !== null) {
         notesCell.textContent = newNotes;
+        const orderId = row.dataset.id;  // Obtener el ID del pedido
+        update(ref(db, 'pedidos/' + orderId), { notes: newNotes });
       }
     }
   });
   
-  // Función para cargar los pedidos desde Firebase
+  // Función para cargar los pedidos desde Firebase en tiempo real
   onValue(ref(db, 'pedidos'), (snapshot) => {
     const orders = snapshot.val();
     if (orders) {
