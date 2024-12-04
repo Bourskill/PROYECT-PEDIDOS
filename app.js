@@ -1,6 +1,6 @@
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js'; // Versión específica
-import { getDatabase, ref, set, push, } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js'; // Versión específica
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
+import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 
 // Configuración de Firebase
