@@ -1,3 +1,8 @@
+
+// Importar Firebase y los servicios que necesitamos
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js';
+import { getDatabase, ref, set, get, child } from 'https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js';
+
 // Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAvgL0rkaKqXDKrtV15BTdcGglQE57pJsA",
