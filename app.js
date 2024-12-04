@@ -18,7 +18,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-
 // Función para abrir el formulario
 document.getElementById('makeOrderBtn').addEventListener('click', () => {
     document.getElementById('orderForm').style.display = 'flex';
@@ -32,6 +31,10 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
   // Función para agregar el pedido a la tabla
   document.getElementById('orderFormContent').addEventListener('submit', (event) => {
     event.preventDefault();
+  
+    // Deshabilitar el botón para evitar múltiples envíos
+    const submitButton = document.getElementById('makeOrderBtn');
+    submitButton.disabled = true;
   
     const client = document.getElementById('client').value;
     const number = document.getElementById('number').value;
@@ -54,14 +57,17 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
       person,
       notes,
       status: "Por Revisar"
+    }).then(() => {
+      // Crear una nueva fila en la tabla después de agregar el pedido
+      addOrderToTable(newOrderRef.key, client, number, date, time, category, comanda, person, notes);
+  
+      // Cerrar el formulario y resetear el contenido
+      document.getElementById('orderForm').style.display = 'none';
+      document.getElementById('orderFormContent').reset();
+      
+      // Volver a habilitar el botón de agregar pedido
+      submitButton.disabled = false;
     });
-  
-    // Crear una nueva fila en la tabla
-    addOrderToTable(newOrderRef.key, client, number, date, time, category, comanda, person, notes);
-  
-    // Cerrar el formulario y resetear el contenido
-    document.getElementById('orderForm').style.display = 'none';
-    document.getElementById('orderFormContent').reset();
   });
   
   // Función para agregar un pedido a la tabla
@@ -101,26 +107,22 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
         notesRow.remove();
       }
     });
-  }
   
-  // Funcionalidad de editar notas
-  document.addEventListener('click', (event) => {
-    if (event.target.classList.contains('edit-notes')) {
-      const row = event.target.closest('tr');
-      const notesCell = row.querySelector('td');
+    // Agregar listener a las notas para editarlas
+    notesRow.querySelector('.edit-notes').addEventListener('click', () => {
+      const notesCell = notesRow.querySelector('td');
       const currentNotes = notesCell.textContent.trim();
   
       const newNotes = prompt('Editar notas:', currentNotes);
       if (newNotes !== null) {
         notesCell.textContent = newNotes || "Sin notas";
   
-        // Actualizar las notas en Firebase
-        const orderId = row.getAttribute('data-order-id');
+        // Actualizar las notas en Firebase en tiempo real
         const orderRef = ref(db, `pedidos/${orderId}`);
-        set(orderRef, { notes: newNotes || "Sin notas" });
+        set(orderRef, { ...notesRow, notes: newNotes || "Sin notas" });
       }
-    }
-  });
+    });
+  }
   
   // Cargar los pedidos desde Firebase cuando se cargue la página
   window.onload = () => {
