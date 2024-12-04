@@ -16,9 +16,9 @@ const firebaseConfig = {
     appId: "1:775813436384:web:4dba50e3fed84354e11185"
   };
 
-// Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+// Inicializar Firebase (debe usar la función 'initializeApp')
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app); // Obtener referencia a la base de datos
 
 // Función para abrir el formulario
 document.getElementById('makeOrderBtn').addEventListener('click', () => {
