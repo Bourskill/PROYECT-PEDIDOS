@@ -1,6 +1,6 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue  } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 
 // Configuración de Firebase
@@ -57,7 +57,17 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
     });
   
     // Crear una nueva fila en la tabla
+    addOrderToTable(newOrderRef.key, client, number, date, time, category, comanda, person, notes);
+  
+    // Cerrar el formulario y resetear el contenido
+    document.getElementById('orderForm').style.display = 'none';
+    document.getElementById('orderFormContent').reset();
+  });
+  
+  // Función para agregar un pedido a la tabla
+  function addOrderToTable(orderId, client, number, date, time, category, comanda, person, notes) {
     const row = document.createElement('tr');
+    row.setAttribute('data-order-id', orderId);
     row.innerHTML = `
       <td>${comanda ? `#${comanda}<br>${person}` : ''}</td>
       <td>${client}<br>${number}</td>
@@ -84,10 +94,6 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
     document.getElementById(category).querySelector('tbody').appendChild(row);
     document.getElementById(category).querySelector('tbody').appendChild(notesRow);
   
-    // Cerrar el formulario y resetear el contenido
-    document.getElementById('orderForm').style.display = 'none';
-    document.getElementById('orderFormContent').reset();
-  
     // Detectar cambios en el estado del pedido y eliminar filas si corresponde
     row.querySelector('.order-status').addEventListener('change', (e) => {
       if (e.target.value === "Entregado" || e.target.value === "No Entregado") {
@@ -95,7 +101,7 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
         notesRow.remove();
       }
     });
-  });
+  }
   
   // Funcionalidad de editar notas
   document.addEventListener('click', (event) => {
@@ -109,12 +115,26 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
         notesCell.textContent = newNotes || "Sin notas";
   
         // Actualizar las notas en Firebase
-        const orderId = event.target.closest('tr').getAttribute('data-order-id');
+        const orderId = row.getAttribute('data-order-id');
         const orderRef = ref(db, `pedidos/${orderId}`);
         set(orderRef, { notes: newNotes || "Sin notas" });
       }
     }
   });
+  
+  // Cargar los pedidos desde Firebase cuando se cargue la página
+  window.onload = () => {
+    const ordersRef = ref(db, 'pedidos');
+    onValue(ordersRef, (snapshot) => {
+      const orders = snapshot.val();
+      if (orders) {
+        Object.keys(orders).forEach(orderId => {
+          const order = orders[orderId];
+          addOrderToTable(orderId, order.client, order.number, order.date, order.time, order.category, order.comanda, order.person, order.notes);
+        });
+      }
+    });
+  };
   
   // Manejo de la navegación mediante teclado entre tablas y el botón "Agregar Pedido"
   const tables = document.querySelectorAll(".table-container table");
