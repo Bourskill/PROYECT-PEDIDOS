@@ -28,12 +28,13 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
     document.getElementById('orderForm').style.display = 'none';
   });
   
-  // Función para agregar el pedido a la tabla
+  // Manejar el evento de envío del formulario
   document.getElementById('orderFormContent').addEventListener('submit', (event) => {
-    event.preventDefault();
+    event.preventDefault();  // Evita el envío normal del formulario
   
-    // Deshabilitar el botón para evitar múltiples envíos
     const submitButton = document.getElementById('makeOrderBtn');
+    
+    // Deshabilitar el botón para evitar múltiples envíos
     submitButton.disabled = true;
   
     const client = document.getElementById('client').value;
@@ -67,6 +68,9 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
       
       // Volver a habilitar el botón de agregar pedido
       submitButton.disabled = false;
+    }).catch((error) => {
+      console.error("Error al agregar pedido: ", error);
+      submitButton.disabled = false;  // Asegurarse de habilitar el botón en caso de error
     });
   });
   
