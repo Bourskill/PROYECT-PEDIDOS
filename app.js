@@ -18,7 +18,8 @@ const firebaseConfig = {
 
 // Inicializar Firebase (debe usar la función 'initializeApp')
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app); // Obtener referencia a la base de datos
+const db = getDatabase(app);
+
 // Función para abrir el formulario
 document.getElementById('makeOrderBtn').addEventListener('click', () => {
     document.getElementById('orderForm').style.display = 'flex';
@@ -29,7 +30,7 @@ document.querySelector('.form-container .close').addEventListener('click', () =>
     document.getElementById('orderForm').style.display = 'none';
 });
 
-// Función para agregar el pedido a la base de datos
+// Función para agregar el pedido a la tabla
 document.getElementById('orderFormContent').addEventListener('submit', (event) => {
     event.preventDefault();
 
@@ -42,7 +43,11 @@ document.getElementById('orderFormContent').addEventListener('submit', (event) =
     const person = document.getElementById('person').value;
     const notes = document.getElementById('notes').value;
 
-    const order = {
+    // Referencia a la base de datos de Firebase
+    const newOrderRef = db.ref('pedidos').push();
+
+    // Agregar el pedido a Firebase
+    newOrderRef.set({
         client,
         number,
         date,
@@ -51,106 +56,69 @@ document.getElementById('orderFormContent').addEventListener('submit', (event) =
         comanda,
         person,
         notes,
-        status: 'Por Revisar'  // Estado inicial
-    };
+        status: "Por Revisar"
+    });
 
-    // Guardar el pedido en Firebase
-    const newOrderRef = db.ref('pedidos').push();
-    newOrderRef.set(order);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${comanda ? `#${comanda}<br>${person}` : ''}</td>
+        <td>${client}<br>${number}</td>
+        <td>${date} ${time}</td>
+        <td>
+            <select class="order-status" data-order-id="${newOrderRef.key}">
+                <option value="Por Revisar">Por Revisar</option>
+                <option value="Revisado">Revisado</option>
+                <option value="Por Aprobar">Por Aprobar</option>
+                <option value="En Proceso">En Proceso</option>
+                <option value="Entregado">Entregado</option>
+                <option value="No Entregado">No Entregado</option>
+            </select>
+        </td>`;
 
-    // Limpiar el formulario y cerrar
+    const notesRow = document.createElement('tr');
+    notesRow.classList.add('notes-row');
+    notesRow.innerHTML = `
+        <td colspan="3">${notes || "Sin notas"}</td>
+        <td><button class="edit-notes" data-order-id="${newOrderRef.key}">Editar</button></td>`;
+
+    document.getElementById(category).querySelector('tbody').appendChild(row);
+    document.getElementById(category).querySelector('tbody').appendChild(notesRow);
+
     document.getElementById('orderForm').style.display = 'none';
     document.getElementById('orderFormContent').reset();
-});
 
-// Leer los pedidos desde Firebase y actualizar la tabla
-db.ref('pedidos').on('value', (snapshot) => {
-    const orders = snapshot.val();
-    updateOrdersTable(orders);
-});
+    // Detectar cambios en el estado del pedido y actualizar en Firebase
+    row.querySelector('.order-status').addEventListener('change', (e) => {
+        const orderId = e.target.getAttribute('data-order-id');
+        const newStatus = e.target.value;
 
-// Función para actualizar la tabla con los pedidos de Firebase
-function updateOrdersTable(orders) {
-    const tables = document.querySelectorAll(".table-container table");
-    // Limpiar las tablas antes de actualizar
-    tables.forEach(table => {
-        const tbody = table.querySelector('tbody');
-        tbody.innerHTML = '';
+        // Actualizar el estado del pedido en Firebase
+        db.ref(`pedidos/${orderId}`).update({ status: newStatus });
+
+        // Eliminar la fila si el pedido está entregado o no entregado
+        if (newStatus === "Entregado" || newStatus === "No Entregado") {
+            row.remove();
+            notesRow.remove();
+        }
     });
+});
 
-    // Recorrer los pedidos y agregarlos a las tablas correspondientes
-    for (const orderId in orders) {
-        const order = orders[orderId];
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ''}</td>
-            <td>${order.client}<br>${order.number}</td>
-            <td>${order.date} ${order.time}</td>
-            <td>
-                <select class="order-status" data-order-id="${orderId}">
-                    <option value="Por Revisar" ${order.status === "Por Revisar" ? "selected" : ""}>Por Revisar</option>
-                    <option value="Revisado" ${order.status === "Revisado" ? "selected" : ""}>Revisado</option>
-                    <option value="Por Aprobar" ${order.status === "Por Aprobar" ? "selected" : ""}>Por Aprobar</option>
-                    <option value="En Proceso" ${order.status === "En Proceso" ? "selected" : ""}>En Proceso</option>
-                    <option value="Entregado" ${order.status === "Entregado" ? "selected" : ""}>Entregado</option>
-                    <option value="No Entregado" ${order.status === "No Entregado" ? "selected" : ""}>No Entregado</option>
-                </select>
-            </td>`;
+// Funcionalidad de editar notas
+document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('edit-notes')) {
+        const orderId = event.target.getAttribute('data-order-id');
+        const newNotes = prompt('Editar notas:');
 
-        const notesRow = document.createElement('tr');
-        notesRow.classList.add('notes-row');
-        notesRow.innerHTML = `
-            <td colspan="3">${order.notes || "Sin notas"}</td>
-            <td><button class="edit-notes" data-order-id="${orderId}">Editar</button></td>`;
+        if (newNotes !== null) {
+            // Actualizar las notas en Firebase
+            db.ref(`pedidos/${orderId}`).update({ notes: newNotes });
 
-        // Agregar las filas a la tabla correspondiente
-        document.getElementById(order.category).querySelector('tbody').appendChild(row);
-        document.getElementById(order.category).querySelector('tbody').appendChild(notesRow);
+            // Actualizar la UI con las nuevas notas
+            const row = event.target.closest('tr');
+            const notesCell = row.querySelector('td');
+            notesCell.textContent = newNotes || "Sin notas";
+        }
     }
-
-    // Detectar cambios en el estado del pedido y actualizar Firebase
-    document.querySelectorAll('.order-status').forEach(statusSelect => {
-        statusSelect.addEventListener('change', (e) => {
-            const orderId = e.target.getAttribute('data-order-id');
-            const newStatus = e.target.value;
-
-            // Actualizar el estado del pedido en Firebase
-            db.ref(`pedidos/${orderId}`).update({ status: newStatus });
-
-            // Eliminar fila si el pedido está "Entregado" o "No Entregado"
-            if (newStatus === "Entregado" || newStatus === "No Entregado") {
-                const row = e.target.closest('tr');
-                const notesRow = row.nextElementSibling;
-                row.remove();
-                notesRow.remove();
-            }
-        });
-    });
-
-    // Funcionalidad de editar notas
-    document.querySelectorAll('.edit-notes').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const orderId = event.target.getAttribute('data-order-id');
-            const newNotes = prompt('Editar notas:');
-            if (newNotes !== null) {
-                // Actualizar las notas en Firebase
-                db.ref(`pedidos/${orderId}`).update({ notes: newNotes });
-
-                // Actualizar la UI con las nuevas notas
-                const notesCell = event.target.closest('tr').querySelector('td');
-                notesCell.textContent = newNotes || "Sin notas";
-            }
-        });
-    });
-});
-
-// Función para abrir y cerrar el formulario
-document.getElementById('makeOrderBtn').addEventListener('click', () => {
-    document.getElementById('orderForm').style.display = 'flex';
-});
-
-document.querySelector('.form-container .close').addEventListener('click', () => {
-    document.getElementById('orderForm').style.display = 'none';
 });
 
 // Manejo de la navegación mediante teclado entre tablas y el botón "Agregar Pedido"
@@ -159,6 +127,7 @@ const addOrderButton = document.getElementById("makeOrderBtn");
 let currentFocusIndex = 0;
 let inTableNavigation = false;
 
+// Configurar tablas y botón para ser enfocados
 tables.forEach(table => table.setAttribute("tabindex", "0"));
 addOrderButton.setAttribute("tabindex", "0");
 
@@ -176,7 +145,7 @@ document.addEventListener("keydown", (e) => {
             e.preventDefault();
             if (document.activeElement.tagName === "TABLE") {
                 inTableNavigation = true;
-                document.activeElement.querySelector("tbody tr:first-child")?.focus();
+                document.activeElement.querySelector("tbody tr:first-child")?.focus(); // Foco al primer elemento de la tabla
             } else {
                 addOrderButton.click(); // Hacer click en el botón de "Agregar pedido"
             }
@@ -210,20 +179,20 @@ function moveFocus(step) {
 
 // Navegar dentro de la tabla seleccionada
 function navigateTable(direction) {
-    const table = document.activeElement.closest("table");
-    const rows = Array.from(table.querySelectorAll("tbody tr"));
-    const currentRow = document.activeElement.closest("tr");
-    const currentIndex = rows.indexOf(currentRow);
-    const nextIndex = currentIndex + direction;
+    const table = document.activeElement.closest("table"); // Obtenemos la tabla activa
+    const rows = Array.from(table.querySelectorAll("tbody tr")); // Filas dentro de la tabla
+    const currentRow = document.activeElement.closest("tr"); // Fila actual
+    const currentIndex = rows.indexOf(currentRow); // Índice de la fila actual
+    const nextIndex = currentIndex + direction; // Índice de la siguiente fila (arriba o abajo)
 
     if (nextIndex >= 0 && nextIndex < rows.length) {
-        rows[nextIndex].focus();
+        rows[nextIndex].focus(); // Cambiar el foco a la siguiente fila
     }
 }
 
 // Hacer las filas enfocables para facilitar la navegación
 tables.forEach(table => {
     table.querySelectorAll("tbody tr").forEach(row => {
-        row.setAttribute("tabindex", "-1");
+        row.setAttribute("tabindex", "-1"); // Hacer que las filas sean enfocables
     });
-});
+});// Obtener referencia a la base de dato
