@@ -18,129 +18,144 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Función para agregar el pedido a la tabla
+// Función para agregar un pedido
 document.getElementById('orderFormContent').addEventListener('submit', (event) => {
     event.preventDefault();
-
+  
     const client = document.getElementById('client').value;
     const number = document.getElementById('number').value;
     const date = new Date(document.getElementById('date').value).toLocaleString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     const time = document.getElementById('time').value;
-    const category = document.getElementById('category').value;
+    const category = document.getElementById('category').value; // Asegúrate de que este valor sea válido
     const comanda = document.getElementById('comanda').value;
     const person = document.getElementById('person').value;
     const notes = document.getElementById('notes').value;
-
-    // Verificar si la categoría es válida
-    if (!category) {
-        alert("Categoría inválida o no seleccionada.");
-        return; // Si la categoría no es válida, no agregamos el pedido.
+  
+    // Validar que la categoría exista antes de continuar
+    if (!category || !document.getElementById(category)) {
+      alert("Por favor, selecciona una categoría válida.");
+      return;
     }
-
-    // Desactivar el botón para evitar múltiples envíos
-    const submitButton = document.getElementById('orderFormContent').querySelector('button');
-    submitButton.disabled = true;
-
-    // Agregar el pedido a Firebase
+  
+    // Crear la referencia para el pedido en Firebase
     const newOrderRef = push(ref(db, 'pedidos'));
+  
+    // Agregar el pedido a Firebase
     set(newOrderRef, {
-        client,
-        number,
-        date,
-        time,
-        category,
-        comanda,
-        person,
-        notes,
-        status: "Por Revisar"
-    }).then(() => {
-        // Agregar el pedido a la tabla solo después de que se haya añadido a Firebase
-        addOrderToTable(newOrderRef.key, client, number, date, time, category, comanda, person, notes);
-        
-        // Reactivar el botón del formulario
-        submitButton.disabled = false;
-
-        // Ocultar el formulario y resetearlo
-        document.getElementById('orderForm').style.display = 'none';
-        document.getElementById('orderFormContent').reset();
-    }).catch(error => {
-        console.error("Error al agregar el pedido:", error);
-        submitButton.disabled = false;
+      client,
+      number,
+      date,
+      time,
+      category,
+      comanda,
+      person,
+      notes,
+      status: 'Por Revisar'
     });
-});
-
-// Función para agregar un pedido a la tabla
-function addOrderToTable(orderId, client, number, date, time, category, comanda, person, notes) {
-    // Comprobar si la categoría existe
-    const table = document.getElementById(category);
-    if (!table) {
-        console.error(`La tabla con el id "${category}" no existe.`);
-        return;
-    }
-
-    // Crear fila con los detalles del pedido
+  
+    // Crear una nueva fila para el pedido
     const row = document.createElement('tr');
     row.innerHTML = `
-        <td>${comanda ? '#${comanda}<br>${person}' : ''}</td>
-        <td>${client}<br>${number}</td>
-        <td>${date} ${time}</td>
-        <td>
-            <select class="order-status">
-                <option value="Por Revisar">Por Revisar</option>
-                <option value="Revisado">Revisado</option>
-                <option value="Por Aprobar">Por Aprobar</option>
-                <option value="En Proceso">En Proceso</option>
-                <option value="Entregado">Entregado</option>
-                <option value="No Entregado">No Entregado</option>
-            </select>
-        </td>
+      <td>${comanda ? `#${comanda}<br>${person}` : ''}</td>
+      <td>${client}<br>${number}</td>
+      <td>${date} ${time}</td>
+      <td>
+        <select class="order-status">
+          <option value="Por Revisar">Por Revisar</option>
+          <option value="Revisado">Revisado</option>
+          <option value="Por Aprobar">Por Aprobar</option>
+          <option value="En Proceso">En Proceso</option>
+          <option value="Entregado">Entregado</option>
+          <option value="No Entregado">No Entregado</option>
+        </select>
+      </td>
     `;
-    
+  
+    // Crear la fila para las notas
     const notesRow = document.createElement('tr');
     notesRow.classList.add('notes-row');
     notesRow.innerHTML = `
-        <td colspan="3">${notes || "Sin notas"}</td>
-        <td><button class="edit-notes" data-order-id="${orderId}">Editar</button></td>
+      <td colspan="3">${notes || "Sin notas"}</td>
+      <td><button class="edit-notes">Editar</button></td>
     `;
-
-    // Agregar el pedido a la tabla de la categoría seleccionada
-    table.querySelector('tbody').appendChild(row);
-    table.querySelector('tbody').appendChild(notesRow);
-}
-
-// Actualizar la UI en tiempo real para cambios en los pedidos
-onValue(ref(db, 'pedidos'), (snapshot) => {
-    if (snapshot.exists()) {
-        const pedidos = snapshot.val();
-        
-        // Limpiar la tabla antes de agregar nuevos pedidos
-        const tables = document.querySelectorAll('table');
-        tables.forEach(table => table.querySelector('tbody').innerHTML = '');
-
-        // Agregar cada pedido a su tabla correspondiente
-        Object.keys(pedidos).forEach(orderId => {
-            const order = pedidos[orderId];
-            addOrderToTable(orderId, order.client, order.number, order.date, order.time, order.category, order.comanda, order.person, order.notes);
-        });
+  
+    // Añadir las filas a la tabla correspondiente según la categoría seleccionada
+    const table = document.getElementById(category);
+    if (table) {
+      table.querySelector('tbody').appendChild(row);
+      table.querySelector('tbody').appendChild(notesRow);
     }
-});
-
-// Función para editar notas de un pedido
-document.addEventListener('click', (event) => {
+  
+    // Cerrar el formulario y resetear
+    document.getElementById('orderForm').style.display = 'none';
+    document.getElementById('orderFormContent').reset();
+  });
+  
+  // Función para actualizar el estado de un pedido
+  document.addEventListener('change', (event) => {
+    if (event.target.classList.contains('order-status')) {
+      const orderId = event.target.closest('tr').dataset.id;
+      const newStatus = event.target.value;
+      update(ref(db, 'pedidos/' + orderId), { status: newStatus });
+    }
+  });
+  
+  // Función para editar las notas de un pedido
+  document.addEventListener('click', (event) => {
     if (event.target.classList.contains('edit-notes')) {
-        const orderId = event.target.getAttribute('data-order-id');
-        const newNotes = prompt("Edita las notas:");
-
-        if (newNotes !== null) {
-            // Actualizar las notas en Firebase
-            const orderRef = ref(db, 'pedidos/' + orderId);
-            update(orderRef, {
-                notes: newNotes
-            }).then(() => {
-                console.log("Notas actualizadas correctamente.");
-            }).catch(error => {
-                console.error("Error al actualizar las notas:", error);
-            });
-        }
+      const row = event.target.closest('tr');
+      const notesCell = row.querySelector('td');
+      const newNotes = prompt('Editar notas:', notesCell.textContent.trim());
+      if (newNotes !== null) {
+        notesCell.textContent = newNotes;
+      }
     }
-});
+  });
+  
+  // Función para cargar los pedidos desde Firebase
+  onValue(ref(db, 'pedidos'), (snapshot) => {
+    const orders = snapshot.val();
+    if (orders) {
+      // Limpiar las tablas antes de llenarlas
+      document.querySelectorAll('table tbody').forEach(tbody => tbody.innerHTML = '');
+  
+      // Recorrer los pedidos y agregarlos a las tablas
+      for (const orderId in orders) {
+        const order = orders[orderId];
+        const { client, number, date, time, category, comanda, person, notes, status } = order;
+  
+        const row = document.createElement('tr');
+        row.dataset.id = orderId; // Guardar el ID del pedido en el atributo data-id
+        row.innerHTML = `
+          <td>${comanda ? `#${comanda}<br>${person}` : ''}</td>
+          <td>${client}<br>${number}</td>
+          <td>${date} ${time}</td>
+          <td>
+            <select class="order-status" value="${status}">
+              <option value="Por Revisar">Por Revisar</option>
+              <option value="Revisado">Revisado</option>
+              <option value="Por Aprobar">Por Aprobar</option>
+              <option value="En Proceso">En Proceso</option>
+              <option value="Entregado">Entregado</option>
+              <option value="No Entregado">No Entregado</option>
+            </select>
+          </td>
+        `;
+  
+        // Crear la fila para las notas
+        const notesRow = document.createElement('tr');
+        notesRow.classList.add('notes-row');
+        notesRow.innerHTML = `
+          <td colspan="3">${notes || "Sin notas"}</td>
+          <td><button class="edit-notes">Editar</button></td>
+        `;
+  
+        // Añadir las filas a la tabla correspondiente según la categoría seleccionada
+        const table = document.getElementById(category);
+        if (table) {
+          table.querySelector('tbody').appendChild(row);
+          table.querySelector('tbody').appendChild(notesRow);
+        }
+      }
+    }
+  });
