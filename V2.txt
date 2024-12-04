@@ -1,0 +1,450 @@
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos</title>
+    <style>
+      /* Estilos generales */
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      h1 {
+        margin: 20px 0;
+        font-size: 2rem;
+        color: #333;
+      }
+
+      /* Contenedor de las tablas */
+      .table-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+        gap: 20px;
+        justify-items: center;
+        margin-bottom: 30px;
+        width: 90%;
+      }
+
+      /* Estilo para las tablas */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: white;
+        border-radius: 8px;
+      }
+
+      th, td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+      }
+
+      td input, td select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+
+      /* Estilos del formulario */
+      .form-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+      }
+
+      .form-container form {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 800px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .form-container .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .form-container .form-group label {
+        font-weight: bold;
+        font-size: 14px;
+        color: #555;
+      }
+
+      .form-container .form-group input,
+      .form-container .form-group select {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        outline: none;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+      }
+
+      .form-container .form-group input:focus,
+      .form-container .form-group select:focus {
+        border-color: #007bff;
+      }
+
+      .form-container button {
+        grid-column: span 2;
+        padding: 12px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .form-container button:hover {
+        background-color: #0056b3;
+      }
+
+      .form-container button.close {
+        background-color: #f44336;
+      }
+
+      .form-container button.close:hover {
+        background-color: #d32f2f;
+      }
+
+      /* Botón de agregar pedido */
+      #makeOrderBtn {
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+      }
+
+      #makeOrderBtn:hover {
+        background-color: #218838;
+      }
+
+      /* Estilo para la fila de notas */
+      .notes-row {
+        text-align: center;
+        font-style: italic;
+        background-color: #f9f9f9;
+        padding: 10px;
+      }
+
+      .edit-notes {
+        background-color: #ffc107;
+        color: white;
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .edit-notes:hover {
+        background-color: #e68900;
+      }
+
+      /* Responsividad */
+      @media (max-width: 768px) {
+        .table-container {
+          grid-template-columns: 1fr; /* 1 columna en pantallas pequeñas */
+        }
+
+        table {
+          width: 90%; /* Hacer que las tablas ocupen más espacio en pantallas pequeñas */
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+  <h1>Gestión de Pedidos</h1>
+
+  <!-- Botón para abrir el formulario -->
+  <button id="makeOrderBtn">Agregar Pedido</button>
+
+  <!-- Tablas para pedidos -->
+  <div class="table-container">
+    <table id="dtf" tabindex="0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <table id="terminados" tabindex="0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="table-container">
+    <table id="redes tabindex="0"">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <table id="sellos" tabindex="0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Formulario para agregar pedido -->
+  <div class="form-container" id="orderForm">
+    <form id="orderFormContent">
+      <div class="form-group">
+        <label for="client">Cliente</label>
+        <input type="text" id="client" required>
+      </div>
+
+      <div class="form-group">
+        <label for="number">Número</label>
+        <input type="text" id="number" required>
+      </div>
+
+      <div class="form-group">
+        <label for="date">Fecha</label>
+        <input type="date" id="date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="time">Hora</label>
+        <input type="time" id="time" required>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Categoría</label>
+        <select id="category">
+          <option value="dtf">DTF</option>
+          <option value="terminados">Terminados</option>
+          <option value="redes">Redes</option>
+          <option value="sellos">Sellos</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="comanda">Comanda</label>
+        <input type="text" id="comanda">
+      </div>
+
+      <div class="form-group">
+        <label for="person">Persona</label>
+        <input type="text" id="person">
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notas</label>
+        <input type="text" id="notes" placeholder="Opcional">
+      </div>
+
+      <button type="submit">Agregar Pedido</button>
+      <button type="button" class="close">Cerrar</button>
+    </form>
+  </div>
+
+  <script>
+    // Función para abrir el formulario
+    document.getElementById('makeOrderBtn').addEventListener('click', () => {
+      document.getElementById('orderForm').style.display = 'flex';
+    });
+
+    // Función para cerrar el formulario
+    document.querySelector('.form-container .close').addEventListener('click', () => {
+      document.getElementById('orderForm').style.display = 'none';
+    });
+
+    // Función para agregar el pedido a la tabla
+    document.getElementById('orderFormContent').addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const client = document.getElementById('client').value;
+      const number = document.getElementById('number').value;
+      const date = new Date(document.getElementById('date').value).toLocaleString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+      const time = document.getElementById('time').value;
+      const category = document.getElementById('category').value;
+      const comanda = document.getElementById('comanda').value;
+      const notes = document.getElementById('notes').value;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${comanda ? `#${comanda}` : ''}</td>
+        <td>${client}<br>${number}</td>
+        <td>${date} ${time}</td>
+        <td>
+          <select>
+            <option value="Por Revisar">Por Revisar</option>
+            <option value="Revisado">Revisado</option>
+            <option value="Por Aprobar">Por Aprobar</option>
+            <option value="En Proceso">En Proceso</option>
+            <option value="Entregado">Entregado</option>
+            <option value="No Entregado">No Entregado</option>
+          </select>
+        </td>
+      `;
+
+      const notesRow = document.createElement('tr');
+      notesRow.classList.add('notes-row');
+      notesRow.innerHTML = `
+        <td colspan="3">${notes || "Sin notas"}</td>
+        <td><button class="edit-notes">Editar</button></td>
+      `;
+
+      document.getElementById(category).querySelector('tbody').appendChild(row);
+      document.getElementById(category).querySelector('tbody').appendChild(notesRow);
+
+      document.getElementById('orderForm').style.display = 'none';
+      document.getElementById('orderFormContent').reset();
+    });
+
+    // Funcionalidad de editar notas
+    document.addEventListener('click', (event) => {
+      if (event.target.classList.contains('edit-notes')) {
+        const row = event.target.closest('tr');
+        const notesCell = row.querySelector('td');
+        const currentNotes = notesCell.textContent.trim();
+
+        const newNotes = prompt('Editar notas:', currentNotes);
+        if (newNotes !== null) {
+          notesCell.textContent = newNotes || "Sin notas";
+        }
+      }
+    });
+    
+  // Elementos a enfocar: tablas y botón "Agregar Pedido"
+  const tables = document.querySelectorAll(".table-container table");
+  const addOrderButton = document.getElementById("makeOrderBtn");
+  let currentFocusIndex = 0;
+  let inTableNavigation = false;
+
+  // Configurar tablas y botón para ser enfocados
+  tables.forEach(table => table.setAttribute("tabindex", "0"));
+  addOrderButton.setAttribute("tabindex", "0");
+
+  document.addEventListener("keydown", (e) => {
+    // Navegación fuera de las tablas
+    if (!inTableNavigation) {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        moveFocus(-1);
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        moveFocus(1);
+      }
+      if (e.key === "Enter" && (document.activeElement.tagName === "TABLE" || document.activeElement === addOrderButton)) {
+        e.preventDefault();
+        if (document.activeElement.tagName === "TABLE") {
+          inTableNavigation = true;
+          document.activeElement.querySelector("tbody tr:first-child")?.focus();
+        } else {
+          addOrderButton.click();
+        }
+      }
+    } else {
+      // Navegación dentro de las tablas
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigateTable(e.key === "ArrowDown" ? 1 : -1);
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        inTableNavigation = false;
+        tables[currentFocusIndex].blur();
+      }
+    }
+  });
+
+  // Cambiar el foco entre las tablas y el botón
+  function moveFocus(step) {
+    currentFocusIndex = (currentFocusIndex + step + tables.length + 1) % (tables.length + 1);
+    if (currentFocusIndex === tables.length) {
+      addOrderButton.focus();
+    } else {
+      tables[currentFocusIndex].focus();
+    }
+  }
+
+  // Navegar dentro de la tabla seleccionada
+  function navigateTable(direction) {
+    const activeRow = document.activeElement.closest("tr");
+    const tbody = activeRow.closest("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const currentIndex = rows.indexOf(activeRow);
+    const nextIndex = currentIndex + direction;
+
+    if (nextIndex >= 0 && nextIndex < rows.length) {
+      rows[nextIndex].focus();
+    }
+  }
+
+  // Hacer las filas enfocables para facilitar la navegación
+  tables.forEach(table => {
+    table.querySelectorAll("tbody tr").forEach(row => {
+      row.setAttribute("tabindex", "-1");
+    });
+  });
+
+  </script>
+
+  </body>
+  </html>
