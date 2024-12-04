@@ -21,7 +21,12 @@ const db = getDatabase(app);
 // Función para mostrar/ocultar el formulario de agregar pedido
 document.getElementById('makeOrderBtn').addEventListener('click', () => {
     const form = document.getElementById('orderForm');
-    form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    form.style.display = 'block';  // Mostrar el formulario
+  });
+  
+  // Función para cerrar el formulario
+  document.querySelector('.close').addEventListener('click', () => {
+    document.getElementById('orderForm').style.display = 'none';  // Ocultar el formulario
   });
   
   // Función para agregar un pedido a Firebase
@@ -58,39 +63,6 @@ document.getElementById('makeOrderBtn').addEventListener('click', () => {
       notes,
       status: 'Por Revisar'
     });
-  
-    // Crear una nueva fila para el pedido
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${comanda ? `#${comanda}<br>${person}` : ''}</td>
-      <td>${client}<br>${number}</td>
-      <td>${date} ${time}</td>
-      <td>
-        <select class="order-status">
-          <option value="Por Revisar">Por Revisar</option>
-          <option value="Revisado">Revisado</option>
-          <option value="Por Aprobar">Por Aprobar</option>
-          <option value="En Proceso">En Proceso</option>
-          <option value="Entregado">Entregado</option>
-          <option value="No Entregado">No Entregado</option>
-        </select>
-      </td>
-    `;
-  
-    // Crear la fila para las notas
-    const notesRow = document.createElement('tr');
-    notesRow.classList.add('notes-row');
-    notesRow.innerHTML = `
-      <td colspan="3">${notes || "Sin notas"}</td>
-      <td><button class="edit-notes">Editar</button></td>
-    `;
-  
-    // Añadir las filas a la tabla correspondiente según la categoría seleccionada
-    const table = document.getElementById(category);
-    if (table) {
-      table.querySelector('tbody').appendChild(row);
-      table.querySelector('tbody').appendChild(notesRow);
-    }
   
     // Cerrar el formulario y resetear
     document.getElementById('orderForm').style.display = 'none';
