@@ -59,7 +59,6 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
-// Escuchar cambios en Firebase para actualizar la tabla
 onValue(ref(db, "pedidos"), (snapshot) => {
   const orders = snapshot.val();
   document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
@@ -67,29 +66,29 @@ onValue(ref(db, "pedidos"), (snapshot) => {
   if (orders) {
     Object.keys(orders).forEach(category => {
       const categoryOrders = orders[category];
-      let categoryHasOrders = false;  // Variable para verificar si la categoría tiene pedidos
+      let remainingOrders = 0;
 
       Object.keys(categoryOrders).forEach(orderId => {
         const order = categoryOrders[orderId];
-        if (order.status === "Entregado") {
-          sendOrderToSheets(order); // Enviar a Google Sheets
-          remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
-        } else if (order.status === "No Entregado") {
-          remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
+        
+        if (order.status === "Entregado" || order.status === "No Entregado") {
+          sendOrderToSheets(order);
+          remove(ref(db, `pedidos/${category}/${orderId}`)); // Eliminar pedido de Firebase
         } else {
-          categoryHasOrders = true; // Si hay al menos un pedido con estado diferente, marcar la categoría como válida
           addOrderToTable(order, orderId, category);
+          remainingOrders++; // Aumentar contador si el pedido no ha sido entregado ni cancelado
         }
       });
 
-      // Si la categoría no tiene pedidos, eliminar la tabla
+      // Eliminar la tabla solo si no quedan pedidos
       const table = document.getElementById(category);
-      if (!categoryHasOrders && table) {
-        table.remove();  // Eliminar la tabla si no tiene pedidos
+      if (remainingOrders === 0 && table) {
+        table.remove();
       }
     });
   }
 });
+
 
 // Agregar pedidos a la tabla
 function addOrderToTable(order, orderId, category) {
