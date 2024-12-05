@@ -29,8 +29,11 @@ document.querySelector(".close").addEventListener("click", () => {
   document.getElementById("orderFormContent").reset();
 });
 
-// Agregar un nuevo pedido
-document.getElementById("orderFormContent").addEventListener("submit", (e) => {
+// Manejar la acción de enviar el formulario
+document.getElementById("orderFormContent").addEventListener("submit", handleOrderSubmit);
+
+// Función para manejar el envío del pedido
+function handleOrderSubmit(e) {
   e.preventDefault();
 
   const client = document.getElementById("client").value;
@@ -41,8 +44,16 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
   const comanda = document.getElementById("comanda").value;
   const person = document.getElementById("person").value;
   const notes = document.getElementById("notes").value;
+
+  // Validar que los campos no estén vacíos
+  if (!client || !number || !date || !time || !category) {
+    alert("Por favor, completa todos los campos requeridos.");
+    return;
+  }
+
   const status = "Por Revisar";
 
+  // Guardar el pedido en Firebase
   push(ref(db, `pedidos/${category}`), {
     client,
     number,
@@ -57,40 +68,9 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
     document.getElementById("orderForm").style.display = "none";
     document.getElementById("orderFormContent").reset();
   }).catch(error => console.error("Error al agregar pedido:", error));
-});
+}
 
-onValue(ref(db, "pedidos"), (snapshot) => {
-  const orders = snapshot.val();
-  document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
-
-  if (orders) {
-    Object.keys(orders).forEach(category => {
-      const categoryOrders = orders[category];
-      let remainingOrders = 0;
-
-      Object.keys(categoryOrders).forEach(orderId => {
-        const order = categoryOrders[orderId];
-        
-        if (order.status === "Entregado" || order.status === "No Entregado") {
-          sendOrderToSheets(order);
-          remove(ref(db, `pedidos/${category}/${orderId}`)); // Eliminar pedido de Firebase
-        } else {
-          addOrderToTable(order, orderId, category);
-          remainingOrders++; // Aumentar contador si el pedido no ha sido entregado ni cancelado
-        }
-      });
-
-      // Eliminar la tabla solo si no quedan pedidos
-      const table = document.getElementById(category);
-      if (remainingOrders === 0 && table) {
-        table.remove();
-      }
-    });
-  }
-});
-
-
-// Agregar pedidos a la tabla
+// Función para agregar un pedido a la tabla
 function addOrderToTable(order, orderId, category) {
   const { client, number, date, time, comanda, person, notes, status } = order;
   const table = document.getElementById(category);
@@ -128,7 +108,7 @@ function addOrderToTable(order, orderId, category) {
   tbody.appendChild(notesRow);
 }
 
-// Actualizar el estado del pedido
+// Función para manejar la actualización del estado del pedido
 document.addEventListener("change", (event) => {
   if (event.target.classList.contains("order-status")) {
     const orderId = event.target.closest("tr").dataset.id;
@@ -141,7 +121,7 @@ document.addEventListener("change", (event) => {
   }
 });
 
-// Editar notas
+// Función para manejar la edición de notas
 document.addEventListener("click", (event) => {
   if (event.target.classList.contains("edit-notes")) {
     const row = event.target.closest("tr").previousElementSibling;
@@ -157,9 +137,42 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// Escuchar cambios en Firebase y actualizar la UI
+onValue(ref(db, "pedidos"), (snapshot) => {
+  const orders = snapshot.val();
+  document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
+
+  if (orders) {
+    Object.keys(orders).forEach(category => {
+      const categoryOrders = orders[category];
+      let remainingOrders = 0;
+
+      Object.keys(categoryOrders).forEach(orderId => {
+        const order = categoryOrders[orderId];
+        
+        if (order.status === "Entregado" || order.status === "No Entregado") {
+          sendOrderToSheets(order);
+          remove(ref(db, `pedidos/${category}/${orderId}`)); // Eliminar pedido de Firebase
+        } else {
+          addOrderToTable(order, orderId, category);
+          remainingOrders++; // Aumentar contador si el pedido no ha sido entregado ni cancelado
+        }
+      });
+
+      // Eliminar la tabla solo si no quedan pedidos
+      const table = document.getElementById(category);
+      if (remainingOrders === 0 && table) {
+        table.remove();
+      }
+    });
+  }
+});
+
 // Enviar el pedido a Google Sheets
 function sendOrderToSheets(order) {
-  fetch("https://script.google.com/macros/s/AKfycbxd88MOM7LQbi220uN_pgmoG7e6eMcZd7MkltgmpQ1GV3fiJzKGFTSHCafjoAv6Wy-i5g/exec", {
+  const url = "https://script.google.com/macros/s/AKfycbxd88MOM7LQbi220uN_pgmoG7e6eMcZd7MkltgmpQ1GV3fiJzKGFTSHCafjoAv6Wy-i5g/exec";
+  
+  fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(order),
