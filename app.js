@@ -18,7 +18,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-
 // Mostrar el formulario de agregar pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
   document.getElementById("orderForm").style.display = "block";
@@ -73,7 +72,7 @@ onValue(ref(db, "pedidos"), (snapshot) => {
       Object.keys(categoryOrders).forEach(orderId => {
         const order = categoryOrders[orderId];
         if (order.status === "Entregado") {
-          sendOrderToSheets(order);
+          sendOrderToSheets(order); // Enviar a Google Sheets
           remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
         } else if (order.status === "No Entregado") {
           remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
@@ -84,11 +83,9 @@ onValue(ref(db, "pedidos"), (snapshot) => {
       });
 
       // Si la categoría no tiene pedidos, eliminar la tabla
-      if (!categoryHasOrders) {
-        const table = document.getElementById(category);
-        if (table) {
-          table.remove();  // Eliminar la tabla si no tiene pedidos
-        }
+      const table = document.getElementById(category);
+      if (!categoryHasOrders && table) {
+        table.remove();  // Eliminar la tabla si no tiene pedidos
       }
     });
   }
@@ -97,26 +94,11 @@ onValue(ref(db, "pedidos"), (snapshot) => {
 // Agregar pedidos a la tabla
 function addOrderToTable(order, orderId, category) {
   const { client, number, date, time, comanda, person, notes, status } = order;
+  const table = document.getElementById(category);
 
-  // Verificar si la tabla ya existe para la categoría
-  let table = document.getElementById(category);
   if (!table) {
-    // Si no existe, crearla
-    table = document.createElement("table");
-    table.id = category;  // Asignar el id para la categoría
-    const thead = document.createElement("thead");
-    thead.innerHTML = `
-      <tr>
-        <th>Comanda</th>
-        <th>Cliente y Número</th>
-        <th>Fecha y Hora</th>
-        <th>Estado</th>
-      </tr>
-    `;
-    const tbody = document.createElement("tbody");
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    document.body.appendChild(table);  // O coloca la tabla en el contenedor adecuado
+    console.warn(`La tabla con el id "${category}" no existe.`);
+    return;
   }
 
   const tbody = table.querySelector("tbody");
