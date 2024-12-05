@@ -1,4 +1,5 @@
-import ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js";
+import * as ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js";
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
@@ -16,6 +17,9 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+const workbook = new ExcelJS.Workbook(); // Accediendo sin importar como módulo
+
 
 // Mostrar el formulario de agregar pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
