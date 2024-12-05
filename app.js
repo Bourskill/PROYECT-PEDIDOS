@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, push, update, onValue } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
-import ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js";
+import * as ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js";
+
 
 // Configuración de Firebase
 const firebaseConfig = {
