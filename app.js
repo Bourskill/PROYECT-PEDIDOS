@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
-import * as ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js";
-
+import { Workbook } from "https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -14,7 +13,7 @@ const firebaseConfig = {
     appId: "1:775813436384:web:4dba50e3fed84354e11185"
 };
 
-// Inicializar Firebase (debe usar la función 'initializeApp')
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
@@ -73,9 +72,6 @@ onValue(ref(db, "pedidos"), (snapshot) => {
             });
         });
     }
-
-    // Filtrar pedidos entregados y generar el reporte
-    generateExcelReport(orders);
 });
 
 // Agregar pedidos a la tabla
@@ -145,9 +141,9 @@ document.addEventListener("click", (event) => {
     }
 });
 
-// Generar el archivo Excel de pedidos entregados
+// Función para generar reporte Excel
 function generateExcelReport(orders) {
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Pedidos Entregados');
 
     worksheet.columns = [
@@ -180,39 +176,12 @@ function generateExcelReport(orders) {
     });
 }
 
-// Subir el archivo a Google Drive
+// Subir el archivo Excel a Google Drive (implementación de ejemplo)
 function uploadToGoogleDrive(file) {
-    const fileMetadata = {
-        'name': 'Pedidos_Entregados.xlsx',
-        'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    };
+    const formData = new FormData();
+    formData.append("file", file, "reporte_pedidos.xlsx");
 
-    const media = {
-        mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        body: file
-    };
-
-    const request = gapi.client.drive.files.create({
-        resource: fileMetadata,
-        media: media,
-        fields: 'id'
-    });
-
-    request.execute(function (response) {
-        if (response.id) {
-            console.log('Archivo subido a Google Drive con ID:', response.id);
-            alert('Archivo Excel subido correctamente!');
-        } else {
-            console.log('Error al subir el archivo');
-        }
-    });
-}
-
-// Cargar la API de Google Drive
-function loadGoogleDriveAPI() {
-    gapi.load('client:auth2', function () {
-        gapi.auth2.init({ client_id: '775813436384-qt2link5p9gri0vgm1va1442crvhltdf.apps.googleusercontent.com' }).then(function () {
-            console.log("API de Google Drive cargada.");
-        });
-    });
+    // Aquí deberías implementar la carga a Google Drive
+    // Puedes usar la API de Google Drive o un backend intermedio
+    console.log("Archivo listo para ser subido a Google Drive");
 }
