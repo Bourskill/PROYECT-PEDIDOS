@@ -1,6 +1,6 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update   } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 
 // Configuración de Firebase
@@ -68,17 +68,28 @@ onValue(ref(db, "pedidos"), (snapshot) => {
   if (orders) {
     Object.keys(orders).forEach(category => {
       const categoryOrders = orders[category];
+      let categoryHasOrders = false;  // Variable para verificar si la categoría tiene pedidos
+
       Object.keys(categoryOrders).forEach(orderId => {
         const order = categoryOrders[orderId];
         if (order.status === "Entregado") {
           sendOrderToSheets(order);
-          remove(ref(db, `pedidos/${category}/${orderId}`));
+          remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
         } else if (order.status === "No Entregado") {
-          remove(ref(db, `pedidos/${category}/${orderId}`));
+          remove(ref(db, `pedidos/${category}/${orderId}`));  // Eliminar el pedido en Firebase
         } else {
+          categoryHasOrders = true; // Si hay al menos un pedido con estado diferente, marcar la categoría como válida
           addOrderToTable(order, orderId, category);
         }
       });
+
+      // Si la categoría no tiene pedidos, eliminar la tabla
+      if (!categoryHasOrders) {
+        const table = document.getElementById(category);
+        if (table) {
+          table.remove();  // Eliminar la tabla si no tiene pedidos
+        }
+      }
     });
   }
 });
@@ -86,11 +97,26 @@ onValue(ref(db, "pedidos"), (snapshot) => {
 // Agregar pedidos a la tabla
 function addOrderToTable(order, orderId, category) {
   const { client, number, date, time, comanda, person, notes, status } = order;
-  const table = document.getElementById(category);
 
+  // Verificar si la tabla ya existe para la categoría
+  let table = document.getElementById(category);
   if (!table) {
-    console.warn(`La tabla con el id "${category}" no existe.`);
-    return;
+    // Si no existe, crearla
+    table = document.createElement("table");
+    table.id = category;  // Asignar el id para la categoría
+    const thead = document.createElement("thead");
+    thead.innerHTML = `
+      <tr>
+        <th>Comanda</th>
+        <th>Cliente y Número</th>
+        <th>Fecha y Hora</th>
+        <th>Estado</th>
+      </tr>
+    `;
+    const tbody = document.createElement("tbody");
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    document.body.appendChild(table);  // O coloca la tabla en el contenedor adecuado
   }
 
   const tbody = table.querySelector("tbody");
