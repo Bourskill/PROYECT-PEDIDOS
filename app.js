@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, push, update, onValue } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
-import * as ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js";
+import * as ExcelJS from "https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js";
 
 
 // Configuración de Firebase
@@ -206,21 +206,30 @@ function getAllOrders() {
 
 // Función para generar el archivo Excel
 async function generateExcel(orders) {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new ExcelJS.Workbook(); // Crea una nueva instancia de la clase Workbook
   const worksheet = workbook.addWorksheet("Pedidos");
 
-  // Encabezados
-  worksheet.addRow(["Cliente", "Número", "Fecha", "Hora", "Categoría", "Comanda", "Persona", "Notas", "Estado"]);
+  // Agregar encabezados de columna
+  worksheet.addRow(["Comanda", "Cliente", "Número", "Fecha", "Hora", "Categoría", "Notas", "Estado"]);
 
+  // Agregar filas de datos
   orders.forEach(order => {
-    const { client, number, date, time, category, comanda, person, notes, status } = order;
-    worksheet.addRow([client, number, date, time, category, comanda, person, notes, status]);
+      worksheet.addRow([order.comanda, order.client, order.number, order.date, order.time, order.category, order.notes, order.status]);
   });
 
-  // Guardar el archivo Excel en el navegador
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer;
+  // Establecer el nombre del archivo
+  const fileName = "reporte_pedidos.xlsx";
+
+  // Crear un buffer de los datos y descargarlo
+  workbook.xlsx.writeBuffer().then(buffer => {
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+  }).catch(error => console.error("Error al generar el archivo Excel:", error));
 }
+
 
 // Función para subir el archivo a Google Drive
 function uploadToDrive(fileContent) {
