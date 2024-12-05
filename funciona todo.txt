@@ -19,6 +19,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 
+
 // Mostrar el formulario de agregar pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
   document.getElementById("orderForm").style.display = "block";
@@ -70,14 +71,7 @@ onValue(ref(db, "pedidos"), (snapshot) => {
       const categoryOrders = orders[category];
       Object.keys(categoryOrders).forEach(orderId => {
         const order = categoryOrders[orderId];
-        if (order.status === "Entregado") {
-          sendOrderToSheets(order);
-          remove(ref(db, `pedidos/${category}/${orderId}`));
-        } else if (order.status === "No Entregado") {
-          remove(ref(db, `pedidos/${category}/${orderId}`));
-        } else {
-          addOrderToTable(order, orderId, category);
-        }
+        addOrderToTable(order, orderId, category);
       });
     });
   }
@@ -149,13 +143,3 @@ document.addEventListener("click", (event) => {
     }
   }
 });
-
-// Enviar el pedido a Google Sheets
-function sendOrderToSheets(order) {
-  fetch("https://script.google.com/macros/s/AKfycbxd88MOM7LQbi220uN_pgmoG7e6eMcZd7MkltgmpQ1GV3fiJzKGFTSHCafjoAv6Wy-i5g/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(order),
-  }).then(response => console.log("Pedido enviado a Google Sheets", response))
-    .catch(error => console.error("Error al enviar a Google Sheets:", error));
-}
