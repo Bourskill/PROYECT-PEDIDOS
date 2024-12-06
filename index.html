@@ -19,14 +19,6 @@
       <button class="view-history" data-category="dtf">Ver Historial</button>
     </div>
     <table id="dtf">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -37,14 +29,6 @@
       <button class="view-history" data-category="terminados">Ver Historial</button>
     </div>
     <table id="terminados">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -55,14 +39,6 @@
       <button class="view-history" data-category="terminados">Ver Historial</button>
     </div>
     <table id="redes">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -73,14 +49,6 @@
       <button class="view-history" data-category="terminados">Ver Historial</button>
     </div>
     <table id="sellos">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -97,8 +65,9 @@
 
     <div class="form-group">
       <label for="number">Número Telefónico</label>
-      <input type="text" id="number" required>
+      <input type="tel" id="number" required pattern="[0-9]{10}">
     </div>
+    
 
     <div class="form-group">
       <label for="date">Dia de Entrega</label>
@@ -136,9 +105,27 @@
     </div>
   </form>
   <button id="addOrderBtn" type="button">Agregar Pedido</button>
-  <button type="button" class="close">Cerrar</button>
 </div>
-  
+
+<!-- Ventana emergente para mostrar y editar el texto completo -->
+<div id="notesPopup" class="popup">
+  <div class="popup-content">
+    <textarea id="popupTextarea" class="popup-textarea"></textarea>
+    <button id="saveNotesButton">Guardar Notas</button>
+  </div>
+</div>
+
+<div id="overlay" class="overlay"></div>
+
+<!-- Ventana emergente para historial -->
+<div id="historyPopup" class="popup">
+  <div class="popup-content">
+    <button class="close" id="closeHistoryBtn">&times;</button>
+    <h2>Historial de Pedidos</h2>
+    <div id="historyContent" class="history-table-container"></div>
+  </div>
+</div>
+
 <!-- JavaScript principal -->
 <script type="module" src="app.js"></script>
 

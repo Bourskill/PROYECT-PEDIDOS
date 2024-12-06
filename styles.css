@@ -1,3 +1,4 @@
+/* Reset básico */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -11,15 +12,15 @@ body {
   width: 100%;
   height: 100vh;
   display: flex;
-  justify-content: center; /* Alineación horizontal */
+  justify-content: center;
   align-items: center;
 }
 
-/* Contenedor principal usando Flexbox */
+/* Contenedor principal */
 .main-container {
   display: flex;
-  flex-wrap: wrap; /* Para que las categorías se ajusten y se apilen cuando sea necesario */
-  gap: 2%; /* Espacio entre las categorías */
+  flex-wrap: wrap;
+  gap: 2%;
   justify-content: center;
   width: 100%;
   height: 95vh;
@@ -28,14 +29,14 @@ body {
 
 .table-container {
   height: 48%;
-  width: 48%; /* Esto asegura que cada uno ocupe el 50% del contenedor */
+  width: 48%;
   background-color: #f9f9f9;
   padding: 10px;
   border-radius: 5px;
   overflow-y: auto;
 }
 
-/* Tarjeta de cada categoría */
+/* Tarjetas de categoría */
 .category-container {
   display: flex;
   flex-direction: column;
@@ -44,7 +45,7 @@ body {
   border-radius: 8px;
 }
 
-/* Título y botón de historial */
+/* Cabecera de la tabla */
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -55,7 +56,6 @@ body {
 .table-header h2 {
   font-size: 1.1rem;
   margin: 0;
-  display: inline-block;
 }
 
 .view-history,
@@ -63,15 +63,15 @@ body {
   background-color: #007bff;
   color: #fff;
   border: none;
-  padding: 10px 10px;
+  padding: 10px;
   cursor: pointer;
   border-radius: 5px;
   font-size: 9px;
 }
 
 #makeOrderBtn {
-  top: 90%;
   position: fixed;
+  top: 90%;
   transform: scale(1.3);
   font-size: 14px;
 }
@@ -84,20 +84,20 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: white;
   border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 th,
 td {
-  padding: 12px;
+  padding: 8px 12px;
   text-align: left;
   border: 1px solid #ddd;
 }
 
 th {
-  background-color: #f4f4f4;
+  background-color: #dadada;
   font-weight: bold;
 }
 
@@ -108,6 +108,19 @@ td select {
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
+}
+
+/* Estilos para la celda de notas */
+.notes-cell {
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+  word-wrap: break-word;
+  padding: 5px 15px 5px 15px;
+  color: gray;
+  font-size: 110%;
 }
 
 /* Estilos para el formulario de agregar pedido */
@@ -123,11 +136,13 @@ td select {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   z-index: 1000;
 }
+
 #orderFormContent {
   display: flex;
-  flex-wrap: wrap; /* Permite que los elementos se envuelvan en múltiples filas */
-  gap: 20px; /* Espacio entre los elementos */
+  flex-wrap: wrap;
+  gap: 20px;
 }
+
 .form-group {
   flex: 0 0 48%;
   margin-bottom: 15px;
@@ -180,13 +195,111 @@ button.close {
   right: 5px;
 }
 
-/* Responsividad para pantallas pequeñas */
+/* Responsividad */
 @media (max-width: 768px) {
   .table-container {
-    width: 100%; /* En pantallas pequeñas las categorías ocupan el 100% */
-  }
-
-  .form-container {
     width: 90%;
   }
+}
+
+/* Estilo para el fondo oscuro y formularios emergentes */
+.overlay,
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+}
+
+.overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.popup {
+  background-color: rgba(0, 0, 0, 0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 35px 10px 20px 10px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 80%;
+  height: 70vh;
+  overflow-y: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  text-align: center;
+}
+
+.popup-textarea {
+  width: 100%;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 16px;
+  resize: none;
+}
+
+#saveNotesButton {
+  margin-top: 30px;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-self: end;
+}
+
+#saveNotesButton:hover {
+  background-color: #45a049;
+}
+
+/* Estilos para textarea */
+textarea {
+  border: none;
+  outline: none;
+  color: #333;
+  height: 100%;
+}
+
+/* Cerrar ventana emergente */
+button.close,
+.popup-content {
+  cursor: pointer;
+}
+
+.history-table-container {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.date-header {
+  background: #f0f0f0;
+  font-weight: bold;
+  text-align: left;
+  padding: 5px 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.popup-content table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.popup-content th,
+.popup-content td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.popup-content th {
+  background-color: #dadada;
+  font-weight: bold;
 }
