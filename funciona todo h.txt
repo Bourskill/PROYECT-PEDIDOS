@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pedidos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>Gestión de Pedidos</h1>
+
+<!-- Botón para abrir el formulario -->
+<button id="makeOrderBtn">Agregar Pedido</button>
+
+<!-- Tablas para pedidos -->
+<div class="table-container">
+  <table id="dtf" tabindex="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <table id="terminados" tabindex="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="table-container">
+  <table id="redes" tabindex="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <table id="sellos" tabindex="0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Cliente</th>
+        <th>Fecha</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Formulario para agregar pedido -->
+<div class="form-container" id="orderForm">
+  <form id="orderFormContent">
+    <div class="form-group">
+      <label for="client">Cliente</label>
+      <input type="text" id="client" required>
+    </div>
+
+    <div class="form-group">
+      <label for="number">Número</label>
+      <input type="text" id="number" required>
+    </div>
+
+    <div class="form-group">
+      <label for="date">Fecha</label>
+      <input type="date" id="date" required>
+    </div>
+
+    <div class="form-group">
+      <label for="time">Hora</label>
+      <input type="time" id="time" required>
+    </div>
+
+    <div class="form-group">
+      <label for="category">Categoría</label>
+      <select id="category">
+        <option value="dtf">DTF</option>
+        <option value="terminados">Terminados</option>
+        <option value="redes">Redes</option>
+        <option value="sellos">Sellos</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="comanda">Comanda</label>
+      <input type="text" id="comanda">
+    </div>
+
+    <div class="form-group">
+      <label for="person">Persona</label>
+      <input type="text" id="person">
+    </div>
+
+    <div class="form-group">
+      <label for="notes">Notas</label>
+      <input type="text" id="notes" placeholder="Opcional">
+    </div>
+
+    <button type="submit">Agregar Pedido</button>
+    <button type="button" class="close">Cerrar</button>
+  </form>
+</div>
+
+<!-- JavaScript principal -->
+<script type="module" src="app.js"></script>
+
+</body>
+</html>

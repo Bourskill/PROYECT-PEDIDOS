@@ -1,7 +1,5 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update   } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
-
+import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -12,15 +10,13 @@ const firebaseConfig = {
     storageBucket: "pedidos-iag.firebasestorage.app",
     messagingSenderId: "775813436384",
     appId: "1:775813436384:web:4dba50e3fed84354e11185"
-  };
+};
 
-// Inicializar Firebase (debe usar la función 'initializeApp')
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-
-
-// Mostrar el formulario de agregar pedido
+// Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
   document.getElementById("orderForm").style.display = "block";
 });
@@ -61,7 +57,7 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
-// Escuchar cambios en Firebase para actualizar la tabla
+// Escuchar cambios en Firebase
 onValue(ref(db, "pedidos"), (snapshot) => {
   const orders = snapshot.val();
   document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");

@@ -1,26 +1,22 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update   } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
-
+import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
-    apiKey: "AIzaSyAvgL0rkaKqXDKrtV15BTdcGglQE57pJsA",
-    authDomain: "pedidos-iag.firebaseapp.com",
-    databaseURL: "https://pedidos-iag-default-rtdb.firebaseio.com",
-    projectId: "pedidos-iag",
-    storageBucket: "pedidos-iag.firebasestorage.app",
-    messagingSenderId: "775813436384",
-    appId: "1:775813436384:web:4dba50e3fed84354e11185"
-  };
+  apiKey: "AIzaSyAvgL0rkaKqXDKrtV15BTdcGglQE57pJsA",
+  authDomain: "pedidos-iag.firebaseapp.com",
+  databaseURL: "https://pedidos-iag-default-rtdb.firebaseio.com",
+  projectId: "pedidos-iag",
+  storageBucket: "pedidos-iag.firebasestorage.app",
+  messagingSenderId: "775813436384",
+  appId: "1:775813436384:web:4dba50e3fed84354e11185"
+};
 
-// Inicializar Firebase (debe usar la función 'initializeApp')
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-
-
-// Mostrar el formulario de agregar pedido
+// Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
   document.getElementById("orderForm").style.display = "block";
 });
@@ -32,9 +28,7 @@ document.querySelector(".close").addEventListener("click", () => {
 });
 
 // Agregar un nuevo pedido
-document.getElementById("orderFormContent").addEventListener("submit", (e) => {
-  e.preventDefault();
-
+document.getElementById("addOrderBtn").addEventListener("click", () => { // Cambié a click aquí
   const client = document.getElementById("client").value;
   const number = document.getElementById("number").value;
   const date = document.getElementById("date").value;
@@ -44,6 +38,11 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
   const person = document.getElementById("person").value;
   const notes = document.getElementById("notes").value;
   const status = "Por Revisar";
+
+  if (!client || !number || !date || !time) {
+    alert("Por favor, complete todos los campos obligatorios.");
+    return;
+  }
 
   push(ref(db, `pedidos/${category}`), {
     client,
@@ -61,7 +60,7 @@ document.getElementById("orderFormContent").addEventListener("submit", (e) => {
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
-// Escuchar cambios en Firebase para actualizar la tabla
+// Escuchar cambios en Firebase
 onValue(ref(db, "pedidos"), (snapshot) => {
   const orders = snapshot.val();
   document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
@@ -131,15 +130,18 @@ document.addEventListener("change", (event) => {
 // Editar notas
 document.addEventListener("click", (event) => {
   if (event.target.classList.contains("edit-notes")) {
-    const row = event.target.closest("tr").previousElementSibling;
-    const orderId = row.dataset.id;
+    const row = event.target.closest("tr");
+    const orderId = row.closest("table").dataset.id;
     const category = row.closest("table").id;
-    const newNotes = prompt("Editar notas:", row.nextElementSibling.querySelector("td").textContent.trim());
+    const notesCell = row.querySelector("td[colspan='3']");
+    const newNotes = prompt("Ingrese nuevas notas:", notesCell.textContent.trim());
 
     if (newNotes !== null) {
       update(ref(db, `pedidos/${category}/${orderId}`), { notes: newNotes })
-        .then(() => console.log("Notas actualizadas"))
-        .catch(error => console.error("Error al actualizar notas:", error));
+        .then(() => {
+          notesCell.textContent = newNotes || "Sin notas";
+        })
+        .catch(error => console.error("Error al editar las notas:", error));
     }
   }
 });

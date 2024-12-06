@@ -8,84 +8,105 @@
 </head>
 <body>
 
-<h1>Gestión de Pedidos</h1>
-
 <!-- Botón para abrir el formulario -->
 <button id="makeOrderBtn">Agregar Pedido</button>
 
-<!-- Tablas para pedidos -->
-<div class="table-container">
-  <table id="dtf" tabindex="0">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Cliente</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
-  <table id="terminados" tabindex="0">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Cliente</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<div class="main-container">
+  <div class="table-container">
+    <div class="table-header">
+      <h2>DTF</h2>
+      <button class="view-history" data-category="dtf">Ver Historial</button>
+    </div>
+    <table id="dtf">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Terminados</h2>
+      <button class="view-history" data-category="terminados">Ver Historial</button>
+    </div>
+    <table id="terminados">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Redes</h2>
+      <button class="view-history" data-category="terminados">Ver Historial</button>
+    </div>
+    <table id="redes">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Sellos</h2>
+      <button class="view-history" data-category="terminados">Ver Historial</button>
+    </div>
+    <table id="sellos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
-<div class="table-container">
-  <table id="redes" tabindex="0">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Cliente</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <table id="sellos" tabindex="0">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Cliente</th>
-        <th>Fecha</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
 
 <!-- Formulario para agregar pedido -->
 <div class="form-container" id="orderForm">
   <form id="orderFormContent">
     <div class="form-group">
-      <label for="client">Cliente</label>
+      <label for="client">Nombre del Cliente</label>
       <input type="text" id="client" required>
     </div>
 
     <div class="form-group">
-      <label for="number">Número</label>
+      <label for="number">Número Telefónico</label>
       <input type="text" id="number" required>
     </div>
 
     <div class="form-group">
-      <label for="date">Fecha</label>
+      <label for="date">Dia de Entrega</label>
       <input type="date" id="date" required>
     </div>
 
     <div class="form-group">
-      <label for="time">Hora</label>
+      <label for="time">Hora de Entrega</label>
       <input type="time" id="time" required>
     </div>
 
@@ -100,12 +121,12 @@
     </div>
 
     <div class="form-group">
-      <label for="comanda">Comanda</label>
+      <label for="comanda">Comanda o Remision</label>
       <input type="text" id="comanda">
     </div>
 
     <div class="form-group">
-      <label for="person">Persona</label>
+      <label for="person">¿Quien Atendió?</label>
       <input type="text" id="person">
     </div>
 
@@ -113,21 +134,11 @@
       <label for="notes">Notas</label>
       <input type="text" id="notes" placeholder="Opcional">
     </div>
-
-    <button type="submit">Agregar Pedido</button>
-    <button type="button" class="close">Cerrar</button>
   </form>
+  <button id="addOrderBtn" type="button">Agregar Pedido</button>
+  <button type="button" class="close">Cerrar</button>
 </div>
-
-<script src="https://apis.google.com/js/api.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.umd.min.js"></script>
-
-<script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/xlsx.full.min.js"></script>
-<script src="https://apis.google.com/js/api.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+  
 <!-- JavaScript principal -->
 <script type="module" src="app.js"></script>
 
