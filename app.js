@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -82,8 +82,6 @@ function formatDate(dateString, timeString) {
   return `${formattedDate} - ${formattedTime}`;
 }
 
-
-
 // Agregar pedidos a la tabla
 function addOrderToTable(order, orderId, category) {
   const { client, number, date, time, comanda, person, notes, status } = order;
@@ -97,7 +95,7 @@ function addOrderToTable(order, orderId, category) {
   const tbody = table.querySelector("tbody");
   const row = document.createElement("tr");
   row.dataset.id = orderId;
-  
+
   // Formatear la fecha y hora antes de insertarla
   const formattedDateTime = formatDate(date, time);
 
@@ -118,177 +116,113 @@ function addOrderToTable(order, orderId, category) {
   `;
   tbody.appendChild(row);
 
-  // Fila de notas
-  const notesRow = document.createElement("tr");
-  notesRow.classList.add("notes-row");
-  notesRow.innerHTML = `
-    <td colspan="4" class="notes-cell">${notes || "Sin notas"}</td>
-  `;
-  tbody.appendChild(notesRow);
-
-  // Hacer que toda la fila de notas sea clickeable
-  notesRow.addEventListener("click", () => {
-    const notesCell = notesRow.querySelector(".notes-cell");
-    const currentNotes = notesCell.textContent.trim();
-    document.getElementById('popupTextarea').value = currentNotes;
-
-    // Mostrar la ventana emergente
-    document.getElementById('notesPopup').style.display = 'flex';
-    document.getElementById('notesPopup').dataset.id = orderId;
-    document.getElementById('notesPopup').dataset.category = category;
+  // Asignar evento 'onchange' al select para actualizar el estado
+  const selectStatus = row.querySelector('.order-status');
+  selectStatus.addEventListener('change', (event) => {
+    updateOrderStatus(category, orderId, order, event.target.value);
   });
 }
 
-// Cerrar la ventana emergente de notas
-document.getElementById('notesPopup').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('notesPopup') || e.target.classList.contains('close-popup')) {
-    closePopup();
-  }
-});
-
-// Función para cerrar la ventana emergente de notas
-function closePopup() {
-  document.getElementById('notesPopup').style.display = 'none';
-}
-
-// Guardar las notas editadas
-document.getElementById('saveNotesButton').addEventListener('click', () => {
-  const updatedNotes = document.getElementById('popupTextarea').value;
-  const orderId = document.getElementById('notesPopup').dataset.id;
-  const category = document.getElementById('notesPopup').dataset.category;
-
-  update(ref(db, `pedidos/${category}/${orderId}`), { notes: updatedNotes })
+// Actualizar estado de un pedido
+function updateOrderStatus(category, orderId, order, newStatus) {
+  update(ref(db, `pedidos/${category}/${orderId}`), { status: newStatus })
     .then(() => {
-      console.log("Notas actualizadas");
-
-      // Actualizar la tabla con las notas nuevas
-      const row = document.querySelector(`tr[data-id="${orderId}"]`);
-      const notesCell = row.querySelector('.notes-cell');
-      notesCell.textContent = updatedNotes;
-
-      // Cerrar la ventana emergente
-      closePopup();
+      if (newStatus === 'Entregado' || newStatus === 'No Entregado') {
+        // Mover el pedido al historial
+        push(ref(db, `historico/${category}`), {
+          ...order, status: newStatus
+        }).then(() => {
+          // Eliminar el pedido de la tabla principal
+          remove(ref(db, `pedidos/${category}/${orderId}`));
+        });
+      }
     })
-    .catch(error => console.error("Error al actualizar notas:", error));
-});
-
-// Mostrar el formulario con fondo oscuro
-function showForm() {
-  document.getElementById('overlay').style.display = 'block';  // Mostrar el fondo oscuro
-  document.getElementById('orderForm').style.display = 'block';  // Mostrar el formulario
+    .catch(error => console.error("Error al actualizar el estado:", error));
 }
 
-// Cerrar el formulario cuando se hace clic fuera de él o presionando Escape
-document.getElementById('overlay').addEventListener('click', closeForm);
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('orderForm').style.display === 'block') {
-      closeForm();
-    } else if (document.getElementById('notesPopup').style.display === 'flex') {
-      closePopup();
+// Mostrar el historial de pedidos
+function loadHistoryPopup(category) {
+  const historyContainer = document.getElementById('historyContent');
+  historyContainer.innerHTML = ''; // Limpiar el contenedor antes de llenarlo
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const tbody = document.createElement('tbody');
+  
+  // Crear encabezados de la tabla sin notas
+  const headerRow = document.createElement('tr');
+  headerRow.innerHTML = `
+    <th>Comanda</th>
+    <th>Cliente</th>
+    <th>Fecha/Hora</th>
+    <th>Estado</th>
+  `;
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+  table.appendChild(tbody);
+
+  // Obtener datos históricos de Firebase
+  onValue(ref(db, `historico/${category}`), (snapshot) => {
+    const historyOrders = snapshot.val();
+    
+    if (historyOrders) {
+      Object.keys(historyOrders).forEach(orderId => {
+        const order = historyOrders[orderId];
+        const row = document.createElement('tr');
+        
+        // Formatear la fecha y hora
+        const formattedDateTime = formatDate(order.date, order.time);
+
+        row.innerHTML = `
+          <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ""}</td>
+          <td>${order.client}<br>${order.number}</td>
+          <td>${formattedDateTime}</td>
+          <td>${order.status}</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
     }
-  }
-});
+  });
 
-function closeForm() {
-  document.getElementById('overlay').style.display = 'none';  // Ocultar el fondo oscuro
-  document.getElementById('orderForm').style.display = 'none';  // Ocultar el formulario
+  historyContainer.appendChild(table);
 }
 
-
+// Función para abrir el historial al hacer clic en el botón
 document.querySelectorAll('.view-history').forEach(button => {
   button.addEventListener('click', () => {
-      const category = button.getAttribute('data-category');
-      showHistory(category);
+    const category = button.dataset.category;
+    loadHistoryPopup(category); // Cargar los datos del historial
+    document.getElementById('historyPopup').style.display = 'flex'; // Mostrar el popup
   });
 });
 
-function showHistory(category) {
-  const historyPopup = document.getElementById('historyPopup');
-  const historyContent = document.getElementById('historyContent');
-  historyContent.innerHTML = ''; // Limpiar contenido previo
-  historyPopup.style.display = 'flex'; // Mostrar ventana emergente
-
-  // Obtener pedidos de la categoría seleccionada
-  onValue(ref(db, `pedidos/${category}`), (snapshot) => {
-      const orders = snapshot.val();
-      const groupedOrders = {}; // Agrupar por fecha
-
-      if (orders) {
-          Object.keys(orders).forEach(orderId => {
-              const order = orders[orderId];
-              if (order.status === 'Entregado' || order.status === 'No Entregado') {
-                  const dateKey = order.date || 'Sin fecha';
-                  if (!groupedOrders[dateKey]) groupedOrders[dateKey] = [];
-                  groupedOrders[dateKey].push(order);
-              }
-          });
-      }
-
-      // Crear contenido agrupado por fecha
-      Object.keys(groupedOrders).sort().forEach(dateKey => {
-          // Encabezado de fecha
-          const dateHeader = document.createElement('div');
-          dateHeader.classList.add('date-header');
-          dateHeader.textContent = new Date(dateKey).toLocaleDateString('es-ES', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-          });
-          historyContent.appendChild(dateHeader);
-
-          // Crear tabla para los pedidos
-          const table = document.createElement('table');
-          const tableHeader = `
-              <thead>
-                  <tr>
-                      <th>Comanda</th>
-                      <th>Cliente</th>
-                      <th>Hora</th>
-                      <th>Estado</th>
-                  </tr>
-              </thead>`;
-          const tableBody = document.createElement('tbody');
-
-          groupedOrders[dateKey].forEach(order => {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                  <td>${order.comanda || '-'}</td>
-                  <td>${order.client || 'Anónimo'}</td>
-                  <td>${order.time || 'Sin hora'}</td>
-                  <td>${order.status}</td>
-              `;
-              tableBody.appendChild(row);
-          });
-
-          table.innerHTML = tableHeader;
-          table.appendChild(tableBody);
-          historyContent.appendChild(table);
-      });
-  });
-}
-
+// Cerrar el popup de historial
 document.getElementById('closeHistoryBtn').addEventListener('click', () => {
   document.getElementById('historyPopup').style.display = 'none';
 });
 
-
-// Cerrar ventana de historial al hacer clic fuera
-document.getElementById('historyPopup').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('historyPopup')) {
-    closeHistory();
+// Cerrar el popup de historial al presionar la tecla Escape
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeHistoryPopup();
   }
 });
 
-// Agregar al evento global para cerrar con Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.getElementById('historyPopup').style.display === 'flex') {
-    closeHistory();
+// Cerrar el popup de historial al hacer clic fuera del área de contenido
+document.getElementById('historyPopup').addEventListener('click', (event) => {
+  if (event.target === document.getElementById('historyPopup')) {
+    closeHistoryPopup();
   }
 });
 
-// Función para cerrar el historial
-function closeHistory() {
+// Función para cerrar el popup del historial
+function closeHistoryPopup() {
   document.getElementById('historyPopup').style.display = 'none';
 }
 
+// Cerrar el formulario de pedidos
+function closeForm() {
+  document.getElementById("orderForm").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+}
