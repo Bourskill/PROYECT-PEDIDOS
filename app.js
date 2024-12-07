@@ -1,3 +1,4 @@
+// Importaciones de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
@@ -18,21 +19,21 @@ const db = getDatabase(app);
 
 // Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
-  document.getElementById("overlay").style.display = 'block'; // Mostrar el fondo oscuro
-  document.getElementById("orderForm").style.display = "block"; // Mostrar el formulario
+  document.getElementById("overlay").style.display = 'block';
+  document.getElementById("orderForm").style.display = "block";
 });
 
 // Cerrar el formulario al hacer clic fuera de él
 document.getElementById("overlay").addEventListener("click", (event) => {
   if (event.target === document.getElementById("overlay")) {
-    closeForm(); // Cierra el formulario si se hace clic en el fondo
+    closeForm();
   }
 });
 
 // Cerrar el formulario al presionar Escape
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.getElementById("orderForm").style.display === "block") {
-    closeForm(); // Cierra el formulario si está visible
+    closeForm();
   }
 });
 
@@ -70,7 +71,7 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
     notes,
     status
   }).then(() => {
-    closeForm(); // Cerrar formulario después de agregar el pedido
+    closeForm();
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
@@ -133,117 +134,45 @@ function addOrderToTable(order, orderId, category) {
         <option value="No Entregado" ${status === "No Entregado" ? "selected" : ""}>No Entregado</option>
       </select>
     </td>
+    <td class="notes-cell">${notes}</td>
   `;
   tbody.appendChild(row);
 
-  // Asignar evento 'onchange' al select para actualizar el estado
   const selectStatus = row.querySelector('.order-status');
   selectStatus.addEventListener('change', (event) => {
     updateOrderStatus(category, orderId, order, event.target.value);
   });
+
+  // Abrir notas al hacer clic en la celda
+  const notesCell = row.querySelector('.notes-cell');
+  notesCell.addEventListener('click', () => openNotesPopup(notes));
 }
 
-// Actualizar estado de un pedido
-function updateOrderStatus(category, orderId, order, newStatus) {
-  update(ref(db, `pedidos/${category}/${orderId}`), { status: newStatus })
-    .then(() => {
-      if (newStatus === 'Entregado' || newStatus === 'No Entregado') {
-        // Mover el pedido al historial
-        push(ref(db, `historico/${category}`), {
-          ...order, status: newStatus
-        }).then(() => {
-          // Eliminar el pedido de la tabla principal
-          remove(ref(db, `pedidos/${category}/${orderId}`));
-        });
-      }
-    })
-    .catch(error => console.error("Error al actualizar el estado:", error));
+// Manejo de popup de notas
+const notesPopup = document.getElementById('notesPopup');
+const overlay = document.getElementById('overlay');
+
+function openNotesPopup(notes) {
+  notesPopup.querySelector('.notes-content').innerText = notes || 'Sin notas';
+  notesPopup.style.display = 'block';
+  overlay.style.display = 'block';
 }
 
-// Mostrar el historial de pedidos
-function loadHistoryPopup(category) {
-  const historyContainer = document.getElementById('historyContent');
-  historyContainer.innerHTML = ''; // Limpiar el contenedor antes de llenarlo
-
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const tbody = document.createElement('tbody');
-
-  // Crear encabezados de la tabla sin notas
-  const headerRow = document.createElement('tr');
-  headerRow.innerHTML = `
-    <th>Comanda</th>
-    <th>Cliente</th>
-    <th>Fecha/Hora</th>
-    <th>Estado</th>
-  `;
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-  table.appendChild(tbody);
-
-  // Obtener datos históricos de Firebase
-  onValue(ref(db, `historico/${category}`), (snapshot) => {
-    const historyOrders = snapshot.val();
-
-    if (historyOrders) {
-      Object.keys(historyOrders).forEach(orderId => {
-        const order = historyOrders[orderId];
-        const row = document.createElement('tr');
-
-        // Formatear la fecha y hora
-        const formattedDateTime = formatDate(order.date, order.time);
-
-        row.innerHTML = `
-          <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ""}</td>
-          <td>${order.client}<br>${order.number}</td>
-          <td>${formattedDateTime}</td>
-          <td>${order.status}</td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    }
-  });
-
-  historyContainer.appendChild(table);
-
-  // Mostrar el popup
-  document.getElementById('historyPopup').style.display = 'flex';
-  document.getElementById('overlay').style.display = 'block'; // Mostrar fondo oscuro
+function closeNotesPopup() {
+  notesPopup.style.display = 'none';
+  overlay.style.display = 'none';
 }
 
-// Evento para cerrar el historial al hacer clic fuera del popup
-document.getElementById("overlay").addEventListener("click", (event) => {
-  const historyPopup = document.getElementById("historyPopup");
-  const orderForm = document.getElementById("orderForm");
+document.getElementById('closeNotesBtn').addEventListener('click', closeNotesPopup);
 
-  if (event.target === document.getElementById("overlay")) {
-    if (historyPopup.style.display === 'flex') {
-      closeHistoryPopup(); // Cierra el historial si está abierto
-    } else if (orderForm.style.display === 'block') {
-      closeForm(); // Cierra el formulario si está abierto
-    }
+document.addEventListener('keydown', (event) => {
+  if (event.key === "Escape" && notesPopup.style.display === 'block') {
+    closeNotesPopup();
   }
 });
 
-// Evento para cerrar el historial al presionar Escape
-document.addEventListener("keydown", (event) => {
-  const historyPopup = document.getElementById("historyPopup");
-  if (event.key === "Escape" && historyPopup.style.display === "flex") {
-    closeHistoryPopup(); // Cierra el historial si está visible
+overlay.addEventListener('click', (event) => {
+  if (notesPopup.style.display === 'block' && event.target === overlay) {
+    closeNotesPopup();
   }
-});
-
-// Cerrar el popup de historial
-function closeHistoryPopup() {
-  document.getElementById("historyPopup").style.display = 'none'; // Ocultar el popup
-  document.getElementById("overlay").style.display = 'none'; // Ocultar el fondo oscuro
-}
-
-// Botones para abrir el historial de cada categoría
-document.querySelectorAll('.view-history').forEach(button => {
-  button.addEventListener('click', () => {
-    const category = button.dataset.category;
-    loadHistoryPopup(category); // Cargar los datos del historial
-  });
 });
