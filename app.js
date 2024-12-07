@@ -1,4 +1,3 @@
-// Importaciones de Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
@@ -19,21 +18,21 @@ const db = getDatabase(app);
 
 // Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
-  document.getElementById("overlay").style.display = 'block';
-  document.getElementById("orderForm").style.display = "block";
+  document.getElementById("overlay").style.display = 'block'; // Mostrar el fondo oscuro
+  document.getElementById("orderForm").style.display = "block"; // Mostrar el formulario
 });
 
 // Cerrar el formulario al hacer clic fuera de él
 document.getElementById("overlay").addEventListener("click", (event) => {
   if (event.target === document.getElementById("overlay")) {
-    closeForm();
+    closeForm(); // Cierra el formulario si se hace clic en el fondo
   }
 });
 
 // Cerrar el formulario al presionar Escape
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.getElementById("orderForm").style.display === "block") {
-    closeForm();
+    closeForm(); // Cierra el formulario si está visible
   }
 });
 
@@ -71,7 +70,7 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
     notes,
     status
   }).then(() => {
-    closeForm();
+    closeForm(); // Cerrar formulario después de agregar el pedido
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
@@ -134,45 +133,73 @@ function addOrderToTable(order, orderId, category) {
         <option value="No Entregado" ${status === "No Entregado" ? "selected" : ""}>No Entregado</option>
       </select>
     </td>
-    <td class="notes-cell">${notes}</td>
   `;
   tbody.appendChild(row);
 
+  // Asignar evento 'onchange' al select para actualizar el estado
   const selectStatus = row.querySelector('.order-status');
   selectStatus.addEventListener('change', (event) => {
     updateOrderStatus(category, orderId, order, event.target.value);
   });
 
-  // Abrir notas al hacer clic en la celda
-  const notesCell = row.querySelector('.notes-cell');
-  notesCell.addEventListener('click', () => openNotesPopup(notes));
+  // Fila de notas
+  const notesRow = document.createElement("tr");
+  notesRow.classList.add("notes-row");
+  notesRow.innerHTML = `<td colspan="4" class="notes-cell">${notes || "Sin notas"}</td>`;
+  tbody.appendChild(notesRow);
+
+  // Hacer que toda la fila de notas sea clickeable
+  notesRow.addEventListener("click", () => {
+    const notesCell = notesRow.querySelector(".notes-cell");
+    const currentNotes = notesCell.textContent.trim();
+    document.getElementById('popupTextarea').value = currentNotes;
+
+    // Mostrar la ventana emergente
+    document.getElementById('notesPopup').style.display = 'flex';
+    document.getElementById('notesPopup').dataset.id = orderId;
+    document.getElementById('notesPopup').dataset.category = category;
+  });
 }
 
-// Manejo de popup de notas
-const notesPopup = document.getElementById('notesPopup');
-const overlay = document.getElementById('overlay');
-
-function openNotesPopup(notes) {
-  notesPopup.querySelector('.notes-content').innerText = notes || 'Sin notas';
-  notesPopup.style.display = 'block';
-  overlay.style.display = 'block';
+// Actualizar estado de un pedido
+function updateOrderStatus(category, orderId, order, newStatus) {
+  update(ref(db, `pedidos/${category}/${orderId}`), { status: newStatus })
+    .then(() => {
+      if (newStatus === 'Entregado' || newStatus === 'No Entregado') {
+        // Mover el pedido al historial
+        push(ref(db, `historico/${category}`), {
+          ...order, status: newStatus
+        }).then(() => {
+          // Eliminar el pedido de la tabla principal
+          remove(ref(db, `pedidos/${category}/${orderId}`));
+        });
+      }
+    })
+    .catch(error => console.error("Error al actualizar el estado:", error));
 }
 
-function closeNotesPopup() {
-  notesPopup.style.display = 'none';
-  overlay.style.display = 'none';
+// Función para cerrar la ventana emergente de notas
+function closePopup() {
+  document.getElementById('notesPopup').style.display = 'none';
 }
 
-document.getElementById('closeNotesBtn').addEventListener('click', closeNotesPopup);
-
-document.addEventListener('keydown', (event) => {
-  if (event.key === "Escape" && notesPopup.style.display === 'block') {
-    closeNotesPopup();
+// Cerrar la ventana emergente de notas cuando se haga clic fuera de ella
+document.getElementById('notesPopup').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('notesPopup') || e.target.classList.contains('close-popup')) {
+    closePopup();
   }
 });
 
-overlay.addEventListener('click', (event) => {
-  if (notesPopup.style.display === 'block' && event.target === overlay) {
-    closeNotesPopup();
-  }
+// Guardar las notas al hacer clic en el botón
+document.getElementById('saveNotesButton').addEventListener('click', () => {
+  const notesText = document.getElementById('popupTextarea').value;
+  const orderId = document.getElementById('notesPopup').dataset.id;
+  const category = document.getElementById('notesPopup').dataset.category;
+
+  // Actualizar las notas en la base de datos
+  update(ref(db, `pedidos/${category}/${orderId}`), { notes: notesText })
+    .then(() => {
+      closePopup(); // Cerrar popup después de guardar las notas
+    })
+    .catch(error => console.error("Error al guardar notas:", error));
 });
