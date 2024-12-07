@@ -18,9 +18,29 @@ const db = getDatabase(app);
 
 // Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
-  document.getElementById("overlay").style.display = 'block';  // Mostrar el fondo oscuro
-  document.getElementById("orderForm").style.display = "block";  // Mostrar el formulario
+  document.getElementById("overlay").style.display = 'block'; // Mostrar el fondo oscuro
+  document.getElementById("orderForm").style.display = "block"; // Mostrar el formulario
 });
+
+// Cerrar el formulario al hacer clic fuera de él
+document.getElementById("overlay").addEventListener("click", (event) => {
+  if (event.target === document.getElementById("overlay")) {
+    closeForm(); // Cierra el formulario si se hace clic en el fondo
+  }
+});
+
+// Cerrar el formulario al presionar Escape
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && document.getElementById("orderForm").style.display === "block") {
+    closeForm(); // Cierra el formulario si está visible
+  }
+});
+
+// Cerrar el formulario de pedidos
+function closeForm() {
+  document.getElementById("orderForm").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+}
 
 // Agregar un nuevo pedido
 document.getElementById("addOrderBtn").addEventListener("click", () => {
@@ -50,7 +70,7 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
     notes,
     status
   }).then(() => {
-    closeForm();  // Cerrar formulario después de agregar el pedido
+    closeForm(); // Cerrar formulario después de agregar el pedido
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
@@ -148,7 +168,7 @@ function loadHistoryPopup(category) {
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const tbody = document.createElement('tbody');
-  
+
   // Crear encabezados de la tabla sin notas
   const headerRow = document.createElement('tr');
   headerRow.innerHTML = `
@@ -164,12 +184,12 @@ function loadHistoryPopup(category) {
   // Obtener datos históricos de Firebase
   onValue(ref(db, `historico/${category}`), (snapshot) => {
     const historyOrders = snapshot.val();
-    
+
     if (historyOrders) {
       Object.keys(historyOrders).forEach(orderId => {
         const order = historyOrders[orderId];
         const row = document.createElement('tr');
-        
+
         // Formatear la fecha y hora
         const formattedDateTime = formatDate(order.date, order.time);
 
@@ -179,50 +199,51 @@ function loadHistoryPopup(category) {
           <td>${formattedDateTime}</td>
           <td>${order.status}</td>
         `;
-        
+
         tbody.appendChild(row);
       });
     }
   });
 
   historyContainer.appendChild(table);
+
+  // Mostrar el popup
+  document.getElementById('historyPopup').style.display = 'flex';
+  document.getElementById('overlay').style.display = 'block'; // Mostrar fondo oscuro
 }
 
-// Función para abrir el historial al hacer clic en el botón
+// Evento para cerrar el historial al hacer clic fuera del popup
+document.getElementById("overlay").addEventListener("click", (event) => {
+  const historyPopup = document.getElementById("historyPopup");
+  const orderForm = document.getElementById("orderForm");
+
+  if (event.target === document.getElementById("overlay")) {
+    if (historyPopup.style.display === 'flex') {
+      closeHistoryPopup(); // Cierra el historial si está abierto
+    } else if (orderForm.style.display === 'block') {
+      closeForm(); // Cierra el formulario si está abierto
+    }
+  }
+});
+
+// Evento para cerrar el historial al presionar Escape
+document.addEventListener("keydown", (event) => {
+  const historyPopup = document.getElementById("historyPopup");
+  if (event.key === "Escape" && historyPopup.style.display === "flex") {
+    closeHistoryPopup(); // Cierra el historial si está visible
+  }
+});
+
+// Cerrar el popup de historial
+function closeHistoryPopup() {
+  document.getElementById("historyPopup").style.display = 'none'; // Ocultar el popup
+  document.getElementById("overlay").style.display = 'none'; // Ocultar el fondo oscuro
+}
+
+// Botones para abrir el historial de cada categoría
 document.querySelectorAll('.view-history').forEach(button => {
   button.addEventListener('click', () => {
     const category = button.dataset.category;
     loadHistoryPopup(category); // Cargar los datos del historial
-    document.getElementById('historyPopup').style.display = 'flex'; // Mostrar el popup
   });
 });
-
-// Cerrar el popup de historial
-document.getElementById('closeHistoryBtn').addEventListener('click', () => {
-  document.getElementById('historyPopup').style.display = 'none';
-});
-
-// Cerrar el popup de historial al presionar la tecla Escape
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
-    closeHistoryPopup();
-  }
-});
-
-// Cerrar el popup de historial al hacer clic fuera del área de contenido
-document.getElementById('historyPopup').addEventListener('click', (event) => {
-  if (event.target === document.getElementById('historyPopup')) {
-    closeHistoryPopup();
-  }
-});
-
-// Función para cerrar el popup del historial
-function closeHistoryPopup() {
-  document.getElementById('historyPopup').style.display = 'none';
-}
-
-// Cerrar el formulario de pedidos
-function closeForm() {
-  document.getElementById("orderForm").style.display = "none";
-  document.getElementById("overlay").style.display = "none";
-}

@@ -5,18 +5,15 @@
   padding: 0;
 }
 
-/* Estilos generales */
 body {
   font-family: "Arial", sans-serif;
   background-color: #181818;
-  width: 100%;
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 100vh;
 }
 
-/* Contenedor principal */
 .main-container {
   display: flex;
   flex-wrap: wrap;
@@ -24,28 +21,18 @@ body {
   justify-content: center;
   width: 100%;
   height: 95vh;
-  font-size: 80%;
+  font-size: 0.8rem;
 }
 
 .table-container {
-  height: 48%;
   width: 48%;
+  height: 48%;
   background-color: #f9f9f9;
   padding: 10px;
   border-radius: 5px;
   overflow-y: auto;
 }
 
-/* Tarjetas de categoría */
-.category-container {
-  display: flex;
-  flex-direction: column;
-  width: 48%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-/* Cabecera de la tabla */
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -55,32 +42,33 @@ body {
 
 .table-header h2 {
   font-size: 1.1rem;
-  margin: 0;
 }
 
-.view-history,
-#makeOrderBtn {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
+button {
   padding: 10px;
-  cursor: pointer;
+  border: none;
   border-radius: 5px;
-  font-size: 9px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+button:hover {
+  opacity: 0.8;
 }
 
 #makeOrderBtn {
   position: fixed;
   top: 90%;
   transform: scale(1.3);
-  font-size: 14px;
+  background-color: #007bff;
+  color: #fff;
 }
 
-.view-history:hover {
-  background-color: #0056b3;
+.view-history {
+  background-color: #007bff;
+  color: #fff;
 }
 
-/* Tablas */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -98,7 +86,6 @@ td {
 
 th {
   background-color: #dadada;
-  font-weight: bold;
 }
 
 td input,
@@ -107,23 +94,19 @@ td select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  background-color: #f9f9f9;
 }
 
-/* Estilos para la celda de notas */
 .notes-cell {
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 250px;
-  word-wrap: break-word;
-  padding: 5px 15px 5px 15px;
+  padding: 5px 15px;
   color: gray;
-  font-size: 110%;
+  font-size: 1.1rem;
 }
 
-/* Estilos para el formulario de agregar pedido */
 .form-container {
   display: none;
   position: fixed;
@@ -145,17 +128,16 @@ td select {
 
 .form-group {
   flex: 0 0 48%;
-  margin-bottom: 15px;
 }
 
-.form-group label {
+label {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
 }
 
-.form-group input,
-.form-group select {
+input,
+select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -163,36 +145,77 @@ td select {
   font-size: 1rem;
 }
 
-button[type="submit"],
-button[type="button"] {
+button[type="submit"] {
   background-color: #28a745;
   color: white;
-  border: none;
-  padding: 10px 20px;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 1rem;
-  margin-top: 10px;
 }
 
 button[type="button"] {
   background-color: #dc3545;
 }
 
-button[type="submit"]:hover,
-button[type="button"]:hover {
-  opacity: 0.8;
-}
-
 button.close {
-  background-color: transparent;
-  border: none;
-  font-size: 1.5rem;
-  color: #333;
-  cursor: pointer;
   position: absolute;
   top: 5px;
   right: 5px;
+  background: transparent;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+textarea {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.popup-content {
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.popup-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.popup-content th,
+.popup-content td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.popup-content th {
+  background-color: #dadada;
 }
 
 /* Responsividad */
@@ -200,106 +223,4 @@ button.close {
   .table-container {
     width: 90%;
   }
-}
-
-/* Estilo para el fondo oscuro y formularios emergentes */
-.overlay,
-.popup {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 999;
-}
-
-.overlay {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.popup {
-  background-color: rgba(0, 0, 0, 0.7);
-  justify-content: center;
-  align-items: center;
-}
-
-.popup-content {
-  background-color: white;
-  padding: 35px 10px 20px 10px;
-  border-radius: 10px;
-  max-width: 600px;
-  width: 80%;
-  height: 70vh;
-  overflow-y: hidden;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  text-align: center;
-}
-
-.popup-textarea {
-  width: 100%;
-  border-radius: 5px;
-  padding: 10px;
-  font-size: 16px;
-  resize: none;
-}
-
-#saveNotesButton {
-  margin-top: 30px;
-  padding: 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  cursor: pointer;
-  align-self: end;
-}
-
-#saveNotesButton:hover {
-  background-color: #45a049;
-}
-
-/* Estilos para textarea */
-textarea {
-  border: none;
-  outline: none;
-  color: #333;
-  height: 100%;
-}
-
-/* Cerrar ventana emergente */
-button.close,
-.popup-content {
-  cursor: pointer;
-}
-
-.history-table-container {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.date-header {
-  background: #f0f0f0;
-  font-weight: bold;
-  text-align: left;
-  padding: 5px 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.popup-content table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-}
-
-.popup-content th,
-.popup-content td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-.popup-content th {
-  background-color: #dadada;
-  font-weight: bold;
 }
