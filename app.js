@@ -22,7 +22,7 @@ document.getElementById("makeOrderBtn").addEventListener("click", () => {
   document.getElementById("orderForm").style.display = "block"; // Mostrar el formulario
 });
 
-// Cerrar el formulario al hacer clic fuera de él
+// Cerrar el formulario al hacer clic fuera de él (en el fondo)
 document.getElementById("overlay").addEventListener("click", (event) => {
   if (event.target === document.getElementById("overlay")) {
     closeForm(); // Cierra el formulario si se hace clic en el fondo
@@ -141,6 +141,24 @@ function addOrderToTable(order, orderId, category) {
   selectStatus.addEventListener('change', (event) => {
     updateOrderStatus(category, orderId, order, event.target.value);
   });
+
+  // Fila de notas
+  const notesRow = document.createElement("tr");
+  notesRow.classList.add("notes-row");
+  notesRow.innerHTML = `<td colspan="4" class="notes-cell">${notes || "Sin notas"}</td>`;
+  tbody.appendChild(notesRow);
+
+  // Hacer que toda la fila de notas sea clickeable
+  notesRow.addEventListener("click", () => {
+    const notesCell = notesRow.querySelector(".notes-cell");
+    const currentNotes = notesCell.textContent.trim();
+    document.getElementById('popupTextarea').value = currentNotes;
+
+    // Mostrar la ventana emergente
+    document.getElementById('notesPopup').style.display = 'flex';
+    document.getElementById('notesPopup').dataset.id = orderId;
+    document.getElementById('notesPopup').dataset.category = category;
+  });
 }
 
 // Actualizar estado de un pedido
@@ -160,90 +178,36 @@ function updateOrderStatus(category, orderId, order, newStatus) {
     .catch(error => console.error("Error al actualizar el estado:", error));
 }
 
-// Mostrar el historial de pedidos
-function loadHistoryPopup(category) {
-  const historyContainer = document.getElementById('historyContent');
-  historyContainer.innerHTML = ''; // Limpiar el contenedor antes de llenarlo
-
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const tbody = document.createElement('tbody');
-
-  // Crear encabezados de la tabla sin notas
-  const headerRow = document.createElement('tr');
-  headerRow.innerHTML = `
-    <th>Comanda</th>
-    <th>Cliente</th>
-    <th>Fecha/Hora</th>
-    <th>Estado</th>
-  `;
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-  table.appendChild(tbody);
-
-  // Obtener datos históricos de Firebase
-  onValue(ref(db, `historico/${category}`), (snapshot) => {
-    const historyOrders = snapshot.val();
-
-    if (historyOrders) {
-      Object.keys(historyOrders).forEach(orderId => {
-        const order = historyOrders[orderId];
-        const row = document.createElement('tr');
-
-        // Formatear la fecha y hora
-        const formattedDateTime = formatDate(order.date, order.time);
-
-        row.innerHTML = `
-          <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ""}</td>
-          <td>${order.client}<br>${order.number}</td>
-          <td>${formattedDateTime}</td>
-          <td>${order.status}</td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    }
-  });
-
-  historyContainer.appendChild(table);
-
-  // Mostrar el popup
-  document.getElementById('historyPopup').style.display = 'flex';
-  document.getElementById('overlay').style.display = 'block'; // Mostrar fondo oscuro
-}
-
-// Evento para cerrar el historial al hacer clic fuera del popup
-document.getElementById("overlay").addEventListener("click", (event) => {
-  const historyPopup = document.getElementById("historyPopup");
-  const orderForm = document.getElementById("orderForm");
-
-  if (event.target === document.getElementById("overlay")) {
-    if (historyPopup.style.display === 'flex') {
-      closeHistoryPopup(); // Cierra el historial si está abierto
-    } else if (orderForm.style.display === 'block') {
-      closeForm(); // Cierra el formulario si está abierto
-    }
+// Cerrar la ventana emergente de notas cuando se haga clic fuera de ella
+document.getElementById('notesPopup').addEventListener('click', (e) => {
+  // Verificar si el clic ocurrió fuera del contenido de la ventana emergente (en el fondo)
+  if (e.target === document.getElementById('notesPopup')) {
+    closePopup(); // Cierra el popup
   }
 });
 
-// Evento para cerrar el historial al presionar Escape
-document.addEventListener("keydown", (event) => {
-  const historyPopup = document.getElementById("historyPopup");
-  if (event.key === "Escape" && historyPopup.style.display === "flex") {
-    closeHistoryPopup(); // Cierra el historial si está visible
+// Cerrar la ventana emergente al presionar Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('notesPopup').style.display === 'flex') {
+    closePopup(); // Cierra el popup si está visible
   }
 });
 
-// Cerrar el popup de historial
-function closeHistoryPopup() {
-  document.getElementById("historyPopup").style.display = 'none'; // Ocultar el popup
-  document.getElementById("overlay").style.display = 'none'; // Ocultar el fondo oscuro
+// Función para cerrar la ventana emergente
+function closePopup() {
+  document.getElementById('notesPopup').style.display = 'none';
 }
 
-// Botones para abrir el historial de cada categoría
-document.querySelectorAll('.view-history').forEach(button => {
-  button.addEventListener('click', () => {
-    const category = button.dataset.category;
-    loadHistoryPopup(category); // Cargar los datos del historial
-  });
+// Guardar las notas al hacer clic en el botón
+document.getElementById('saveNotesButton').addEventListener('click', () => {
+  const notesText = document.getElementById('popupTextarea').value;
+  const orderId = document.getElementById('notesPopup').dataset.id;
+  const category = document.getElementById('notesPopup').dataset.category;
+
+  // Actualizar las notas en la base de datos
+  update(ref(db, `pedidos/${category}/${orderId}`), { notes: notesText })
+    .then(() => {
+      closePopup(); // Cerrar popup después de guardar las notas
+    })
+    .catch(error => console.error("Error al guardar notas:", error));
 });
