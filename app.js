@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
+import { getDatabase, ref, push, onValue, update, remove, set } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -147,14 +147,34 @@ function addOrderToTable(order, orderId, category) {
   });
 }
 
-// Función para formatear la fecha en el formato YYYY-MM-DD HH:mm
-function formatDate(date, time) {
-  const formattedDate = new Date(date); // Convierte la fecha a un objeto Date
-  const hours = formattedDate.getHours().toString().padStart(2, '0'); // Obtiene la hora en formato 2 dígitos
-  const minutes = formattedDate.getMinutes().toString().padStart(2, '0'); // Obtiene los minutos en formato 2 dígitos
-  const seconds = formattedDate.getSeconds().toString().padStart(2, '0'); // Obtiene los segundos en formato 2 dígitos
-  
-  return `${formattedDate.toISOString().split('T')[0]} ${hours}:${minutes}:${seconds}`; // Devuelve la fecha y hora formateada
+// Función para formatear la fecha y hora en el formato "12 de Diciembre - 7:00pm"
+function formatDate(dateString, timeString) {
+  const date = new Date(dateString); // Convierte la fecha a objeto Date
+
+  // Meses en español
+  const months = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
+  // Obtener el día y mes
+  const day = date.getDate();
+  const month = months[date.getMonth()]; // Obtener el mes en español
+
+  // Separar y convertir la hora
+  const [hours, minutes] = timeString.split(":");
+  let hour = parseInt(hours, 10);
+  const isPM = hour >= 12; // Determinar si es PM
+  if (hour > 12) {
+    hour -= 12;
+  } else if (hour === 0) {
+    hour = 12;
+  }
+
+  const formattedTime = `${hour}:${minutes} ${isPM ? "pm" : "am"}`;
+
+  // Retornar en el formato deseado
+  return `${day} de ${month} - ${formattedTime}`;
 }
 
 // Actualizar estado de un pedido
@@ -191,7 +211,6 @@ function updateOrderStatus(category, orderId, order, newStatus) {
     });
 }
 
-
 // Mover pedidos al historial
 function moveToHistory(category, orderId, order) {
   set(ref(db, `historico/${category}/${orderId}`), order)
@@ -199,16 +218,16 @@ function moveToHistory(category, orderId, order) {
     .catch((error) => console.error("Error al mover al historial:", error));
 }
 
-// Mostrar el historial de pedidos
 function loadHistoryPopup(category) {
   const historyContainer = document.getElementById('historyContent');
   historyContainer.innerHTML = ''; // Limpiar el contenedor antes de llenarlo
 
+  // Crear la tabla
   const table = document.createElement('table');
   const thead = document.createElement('thead');
   const tbody = document.createElement('tbody');
 
-  // Crear encabezados de la tabla sin notas
+  // Crear encabezados de la tabla
   const headerRow = document.createElement('tr');
   headerRow.innerHTML = `
     <th>Comanda</th>
@@ -223,23 +242,40 @@ function loadHistoryPopup(category) {
   // Obtener datos históricos de Firebase
   onValue(ref(db, `historico/${category}`), (snapshot) => {
     const historyOrders = snapshot.val();
-
     if (historyOrders) {
-      Object.keys(historyOrders).forEach(orderId => {
-        const order = historyOrders[orderId];
-        const row = document.createElement('tr');
+      // Agrupar los pedidos por fecha
+      const groupedOrders = groupOrdersByDate(historyOrders);
 
-        // Formatear la fecha y hora
-        const formattedDateTime = formatDate(order.date, order.time);
+      // Iterar sobre las fechas agrupadas
+      Object.keys(groupedOrders).forEach(date => {
+        const dateGroup = groupedOrders[date];
+        
+        // Crear una fila para la fecha
+        const dateRow = document.createElement('tr');
+        dateRow.classList.add('date-row');
+        const dateCell = document.createElement('td');
+        dateCell.colSpan = 4;
+        dateCell.textContent = date;  // Mostrar la fecha como título
+        dateCell.style.fontWeight = 'bold';  // Resaltar la fecha
+        dateRow.appendChild(dateCell);
+        tbody.appendChild(dateRow);
 
-        row.innerHTML = `
-          <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ""}</td>
-          <td>${order.client}<br>${order.number}</td>
-          <td>${formattedDateTime}</td>
-          <td>${order.status}</td>
-        `;
+        // Crear filas para los pedidos de esa fecha
+        dateGroup.forEach(order => {
+          const row = document.createElement('tr');
+          
+          // Formatear la fecha y hora
+          const formattedDateTime = formatDate(order.date, order.time);
 
-        tbody.appendChild(row);
+          row.innerHTML = `
+            <td>${order.comanda ? `#${order.comanda}<br>${order.person}` : ""}</td>
+            <td>${order.client}<br>${order.number}</td>
+            <td>${formattedDateTime}</td>
+            <td>${order.status}</td>
+          `;
+
+          tbody.appendChild(row);
+        });
       });
     }
   });
@@ -251,12 +287,38 @@ function loadHistoryPopup(category) {
   document.getElementById('overlay').style.display = 'block'; // Mostrar fondo oscuro
 }
 
-// Evento para cerrar el historial al hacer clic fuera del popup
-document.getElementById("overlay").addEventListener("click", (event) => {
-  const historyPopup = document.getElementById("historyPopup");
-  const orderForm = document.getElementById("orderForm");
+// Función para agrupar los pedidos por fecha
+function groupOrdersByDate(orders) {
+  const grouped = {};
 
-  if (event.target === document.getElementById("overlay")) {
+  Object.keys(orders).forEach(orderId => {
+    const order = orders[orderId];
+    const orderDate = new Date(order.date);
+    
+    // Formatear la fecha a "12 de Diciembre"
+    const day = orderDate.getDate();
+    const month = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ][orderDate.getMonth()];
+    const dateKey = `${day} de ${month}`;
+
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push(order);
+  });
+
+  return grouped;
+}
+
+// Evento para cerrar el historial al hacer clic fuera del popup
+document.getElementById("historyPopup").addEventListener("click", (event) => {
+  console.log("holi")
+  const historyPopup = document.getElementById("historyPopup");
+  const orderForm = document.getElementById("orderForm"); 
+
+  if (event.target === document.getElementById("historyPopup")) {
     if (historyPopup.style.display === 'flex') {
       closeHistoryPopup(); // Cierra el historial si está abierto
     } else if (orderForm.style.display === 'block') {
