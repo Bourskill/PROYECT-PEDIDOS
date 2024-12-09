@@ -200,6 +200,9 @@ button.close {
   .table-container {
     width: 90%;
   }
+ .form-group{
+    flex: 0 0 45%
+  }
 }
 
 /* Estilo para el fondo oscuro y formularios emergentes */
