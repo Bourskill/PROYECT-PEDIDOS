@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Pedidos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Botón para abrir el formulario -->
+<button id="makeOrderBtn">Agregar Pedido</button>
+
+<div class="main-container">
+  <div class="table-container">
+    <div class="table-header">
+      <h2>DTF</h2>
+      <button class="view-history" data-category="dtf">Ver Historial</button>
+    </div>
+    <table id="dtf">
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Terminados</h2>
+      <button class="view-history" data-category="terminados">Ver Historial</button>
+    </div>
+    <table id="terminados">
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Redes</h2>
+      <button class="view-history" data-category="redes">Ver Historial</button>
+    </div>
+    <table id="redes">
+      <tbody></tbody>
+    </table>
+  </div>
+  
+  <div class="table-container">
+    <div class="table-header">
+      <h2>Sellos</h2>
+      <button class="view-history" data-category="sellos">Ver Historial</button>
+    </div>
+    <table id="sellos">
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Formulario para agregar pedido -->
+<div id="overlay" class="overlay">
+  <div class="form-container" id="orderForm">
+    <form id="orderFormContent">
+      <div class="form-group">
+        <label for="client">Nombre del Cliente</label>
+        <input type="text" id="client" required>
+      </div>
+
+      <div class="form-group">
+        <label for="number">Número Telefónico</label>
+        <input type="tel" id="number" required pattern="[0-9]{10}">
+      </div>
+
+      <div class="form-group">
+        <label for="date">Día de Entrega</label>
+        <input type="date" id="date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="time">Hora de Entrega</label>
+        <input type="time" id="time" required>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Categoría</label>
+        <select id="category">
+          <option value="dtf">DTF</option>
+          <option value="terminados">Terminados</option>
+          <option value="redes">Redes</option>
+          <option value="sellos">Sellos</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="comanda">Comanda o Remisión</label>
+        <input type="text" id="comanda">
+      </div>
+
+      <div class="form-group">
+        <label for="person">¿Quién Atendió?</label>
+        <input type="text" id="person">
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notas</label>
+        <input type="text" id="notes" placeholder="Opcional">
+      </div>
+    </form>
+    <button id="addOrderBtn" type="button">Agregar Pedido</button>
+  </div>
+
+  <!-- Ventana emergente para historial -->
+  <div id="historyPopup" class="popup">
+    <div class="popup-content">
+      <h2>Historial de Pedidos</h2>
+      <div id="historyContent" class="history-table-container"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Ventana emergente para mostrar y editar el texto completo -->
+<div id="notesPopup" class="popup">
+  <div class="popup-content">
+    <textarea id="popupTextarea" class="popup-textarea"></textarea>
+    <button id="saveNotesButton">Guardar Notas</button>
+  </div>
+</div>
+
+<!-- JavaScript principal -->
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
