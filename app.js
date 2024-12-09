@@ -1,41 +1,42 @@
-// Configuración inicial de Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, push } from "https://www.gstatic.com/firebasejs/9.17.2/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
+// Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  databaseURL: "TU_DATABASE_URL",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID",
+  apiKey: "AIzaSyAvgL0rkaKqXDKrtV15BTdcGglQE57pJsA",
+  authDomain: "pedidos-iag.firebaseapp.com",
+  databaseURL: "https://pedidos-iag-default-rtdb.firebaseio.com",
+  projectId: "pedidos-iag",
+  storageBucket: "pedidos-iag.firebasestorage.app",
+  messagingSenderId: "775813436384",
+  appId: "1:775813436384:web:4dba50e3fed84354e11185"
 };
 
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // Mostrar formulario de pedido
 document.getElementById("makeOrderBtn").addEventListener("click", () => {
-  document.getElementById("overlay").style.display = 'block'; // Mostrar el fondo oscuro
-  document.getElementById("orderForm").style.display = "block"; // Mostrar el formulario
+  document.getElementById("overlay").style.display = 'flex'; 
+  document.getElementById("orderForm").style.display = "block"; 
 });
 
 // Cerrar el formulario al hacer clic fuera de él
 document.getElementById("overlay").addEventListener("click", (event) => {
   if (event.target === document.getElementById("overlay")) {
-    closeForm(); // Cierra el formulario si se hace clic en el fondo
+    closeForm();
   }
 });
 
 // Cerrar el formulario al presionar Escape
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.getElementById("orderForm").style.display === "block") {
-    closeForm(); // Cierra el formulario si está visible
+    closeForm();
   }
 });
 
-// Cerrar el formulario de pedidos
+// Función para cerrar el formulario
 function closeForm() {
   document.getElementById("orderForm").style.display = "none";
   document.getElementById("overlay").style.display = "none";
@@ -69,31 +70,28 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
     notes,
     status
   }).then(() => {
-    closeForm(); // Cerrar formulario después de agregar el pedido
+    closeForm();
   }).catch(error => console.error("Error al agregar pedido:", error));
 });
 
-// Mostrar pedidos activos
-document.getElementById("showOrdersBtn").addEventListener("click", () => {
-  const ordersContainer = document.getElementById("ordersContainer");
-  ordersContainer.innerHTML = ""; // Limpiar contenido previo
+// Escuchar cambios en Firebase y actualizar la tabla
+onValue(ref(db, "pedidos"), (snapshot) => {
+  const orders = snapshot.val();
+  document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
 
-  onValue(ref(db, "pedidos"), (snapshot) => {
-    const orders = snapshot.val();
-
-    if (orders) {
-      Object.keys(orders).forEach((orderId) => {
-        const order = orders[orderId];
-        addOrderRow(order, orderId);
+  if (orders) {
+    Object.keys(orders).forEach(category => {
+      const categoryOrders = orders[category];
+      Object.keys(categoryOrders).forEach(orderId => {
+        const order = categoryOrders[orderId];
+        addOrderToTable(order, orderId, category);
       });
-    } else {
-      ordersContainer.innerHTML = "<p>No hay pedidos activos.</p>";
-    }
-  });
+    });
+  }
 });
 
-// Agregar una fila de pedido
-function addOrderRow(order, orderId) {
+// Función para agregar los pedidos a la tabla
+function addOrderToTable(order, orderId, category) {
   const { client, number, date, time, comanda, person, notes, status } = order;
   const table = document.getElementById(category);
 
@@ -106,7 +104,6 @@ function addOrderRow(order, orderId) {
   const row = document.createElement("tr");
   row.dataset.id = orderId;
 
-  // Formatear la fecha y hora antes de insertarla
   const formattedDateTime = formatDate(date, time);
 
   row.innerHTML = `
@@ -126,23 +123,80 @@ function addOrderRow(order, orderId) {
   `;
   tbody.appendChild(row);
 
-  // Asignar evento 'onchange' al select para actualizar el estado
+  // Asignar evento para actualizar el estado
   const selectStatus = row.querySelector('.order-status');
   selectStatus.addEventListener('change', (event) => {
     updateOrderStatus(category, orderId, order, event.target.value);
   });
+
+  const notesRow = document.createElement("tr");
+  notesRow.classList.add("notes-row");
+  notesRow.innerHTML = `<td colspan="4" class="notes-cell">${notes || "Sin notas"}</td>`;
+  tbody.appendChild(notesRow);
+
+  // Hacer que la fila de notas sea clickeable
+  notesRow.addEventListener("click", () => {
+    const notesCell = notesRow.querySelector(".notes-cell");
+    const currentNotes = notesCell.textContent.trim();
+    document.getElementById('popupTextarea').value = currentNotes;
+
+    // Mostrar la ventana emergente
+    document.getElementById('notesPopup').style.display = 'flex';
+    document.getElementById('notesPopup').dataset.id = orderId;
+    document.getElementById('notesPopup').dataset.category = category;
+  });
+}
+
+// Función para formatear la fecha en el formato YYYY-MM-DD HH:mm
+function formatDate(date, time) {
+  const formattedDate = new Date(date); // Convierte la fecha a un objeto Date
+  const hours = formattedDate.getHours().toString().padStart(2, '0'); // Obtiene la hora en formato 2 dígitos
+  const minutes = formattedDate.getMinutes().toString().padStart(2, '0'); // Obtiene los minutos en formato 2 dígitos
+  const seconds = formattedDate.getSeconds().toString().padStart(2, '0'); // Obtiene los segundos en formato 2 dígitos
+  
+  return `${formattedDate.toISOString().split('T')[0]} ${hours}:${minutes}:${seconds}`; // Devuelve la fecha y hora formateada
 }
 
 // Actualizar estado de un pedido
 function updateOrderStatus(category, orderId, order, newStatus) {
+  // Actualizar el estado en Firebase
   update(ref(db, `pedidos/${category}/${orderId}`), { status: newStatus })
     .then(() => {
-      alert("Pedido marcado como entregado.");
-      moveToHistory(orderId); // Mover al historial
+      // Si el estado cambia a "Entregado" o "No Entregado"
+      if (newStatus === "Entregado" || newStatus === "No Entregado") {
+        // Mover el pedido al historial
+        push(ref(db, `historico/${category}`), {
+          ...order, status: newStatus
+        })
+        .then(() => {
+          // Eliminar el pedido de la tabla principal en Firebase
+          remove(ref(db, `pedidos/${category}/${orderId}`))
+            .then(() => {
+              // Aquí eliminamos el pedido de la tabla en la interfaz
+              // Esto es necesario porque Firebase no se actualiza en tiempo real
+              // en la vista hasta que recargue los datos.
+              // Aquí puedes agregar un código para eliminar la fila de la tabla en la UI.
+              const row = document.querySelector(`[data-id="${orderId}"]`);
+              if (row) {
+                row.remove(); // Eliminar la fila de la tabla
+              }
+            })
+            .catch(error => console.error("Error al eliminar el pedido:", error));
+        })
+        .catch((error) => console.error("Error al mover el pedido al historial:", error));
+      }
     })
-    .catch((error) => {
-      console.error("Error al actualizar el pedido:", error);
+    .catch(error => {
+      console.error("Error al actualizar el estado del pedido:", error);
     });
+}
+
+
+// Mover pedidos al historial
+function moveToHistory(category, orderId, order) {
+  set(ref(db, `historico/${category}/${orderId}`), order)
+    .then(() => remove(ref(db, `pedidos/${category}/${orderId}`)))
+    .catch((error) => console.error("Error al mover al historial:", error));
 }
 
 // Mostrar el historial de pedidos
@@ -231,4 +285,58 @@ document.querySelectorAll('.view-history').forEach(button => {
     const category = button.dataset.category;
     loadHistoryPopup(category); // Cargar los datos del historial
   });
+});
+
+// Mostrar el popup con las notas al hacer clic en la fila de notas
+document.querySelectorAll(".notes-row").forEach(row => {
+  row.addEventListener("click", () => {
+    const orderId = row.closest("tr").dataset.id;  // ID del pedido
+    const category = row.closest("table").id;      // Categoría del pedido
+    const notes = row.querySelector(".notes-cell").textContent.trim();
+    
+    // Mostrar las notas en el popup
+    document.getElementById("popupTextarea").value = notes;
+    document.getElementById("notesPopup").style.display = "flex";
+    document.getElementById("notesPopup").dataset.id = orderId;
+    document.getElementById("notesPopup").dataset.category = category;
+  });
+});
+
+// Guardar las notas editadas en Firebase
+document.getElementById("saveNotesButton").addEventListener("click", () => {
+  const orderId = document.getElementById("notesPopup").dataset.id;
+  const category = document.getElementById("notesPopup").dataset.category;
+  const newNotes = document.getElementById("popupTextarea").value;
+
+  if (newNotes !== '') {
+    // Actualizar las notas en la base de datos de Firebase
+    update(ref(db, `pedidos/${category}/${orderId}`), { notes: newNotes })
+      .then(() => {
+        closeNotesPopup();  // Cerrar el popup de notas
+      })
+      .catch((error) => {
+        console.error("Error al guardar las notas:", error);
+      });
+  } else {
+    alert("Por favor, ingrese una nota.");
+  }
+});
+
+// Cerrar el popup de notas si se hace clic fuera de él
+document.getElementById("notesPopup").addEventListener("click", (event) => {
+  if (event.target === document.getElementById("notesPopup")) {
+    closeNotesPopup();
+  }
+});
+
+// Función para cerrar el popup de notas
+function closeNotesPopup() {
+  document.getElementById("notesPopup").style.display = 'none'; // Ocultar el popup
+}
+
+// Opcional: Cerrar el popup de notas al presionar Escape
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeNotesPopup();
+  }
 });
