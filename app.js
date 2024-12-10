@@ -147,9 +147,9 @@ function addOrderToTable(order, orderId, category) {
   });
 }
 
-// Función para formatear la fecha y hora en el formato "12 de Diciembre - 7:00pm"
 function formatDate(dateString, timeString) {
-  const date = new Date(dateString); // Convierte la fecha a objeto Date
+  // Dividir la fecha manualmente para evitar problemas con zonas horarias
+  const [year, month, day] = dateString.split("-").map(Number);
 
   // Meses en español
   const months = [
@@ -158,8 +158,8 @@ function formatDate(dateString, timeString) {
   ];
 
   // Obtener el día y mes
-  const day = date.getDate();
-  const month = months[date.getMonth()]; // Obtener el mes en español
+  const formattedDay = day; // Mantener el día original del string
+  const formattedMonth = months[month - 1]; // Ajustar el índice del mes
 
   // Separar y convertir la hora
   const [hours, minutes] = timeString.split(":");
@@ -174,7 +174,7 @@ function formatDate(dateString, timeString) {
   const formattedTime = `${hour}:${minutes} ${isPM ? "pm" : "am"}`;
 
   // Retornar en el formato deseado
-  return `${day} de ${month} - ${formattedTime}`;
+  return `${formattedDay} de ${formattedMonth} - ${formattedTime}`;
 }
 
 // Actualizar estado de un pedido
