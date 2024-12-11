@@ -42,8 +42,13 @@ function closeForm() {
   document.getElementById("overlay").style.display = "none";
 }
 
-// Agregar un nuevo pedido
 document.getElementById("addOrderBtn").addEventListener("click", () => {
+  const addButton = document.getElementById("addOrderBtn");
+
+  // Verificar que el botón se deshabilita
+  console.log("Deshabilitando el botón...");
+  addButton.disabled = true;
+
   const client = document.getElementById("client").value;
   const number = document.getElementById("number").value;
   const date = document.getElementById("date").value;
@@ -56,9 +61,13 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
 
   if (!client || !number || !date || !time) {
     alert("Por favor, complete todos los campos obligatorios.");
+    addButton.disabled = false;
+    console.log("Botón habilitado después de error.");
     return;
   }
 
+  console.log("Agregando pedido...", { client, number, date, time, category });
+  
   push(ref(db, `pedidos/${category}`), {
     client,
     number,
@@ -70,13 +79,25 @@ document.getElementById("addOrderBtn").addEventListener("click", () => {
     notes,
     status
   }).then(() => {
+    console.log("Pedido agregado correctamente.");
     closeForm();
-  }).catch(error => console.error("Error al agregar pedido:", error));
+    clearForm();
+    addButton.disabled = false;
+    console.log("Botón habilitado después de agregar pedido.");
+  }).catch(error => {
+    console.error("Error al agregar pedido:", error);
+    addButton.disabled = false;
+    console.log("Botón habilitado después de error.");
+  });
 });
+
+
 
 // Escuchar cambios en Firebase y actualizar la tabla
 onValue(ref(db, "pedidos"), (snapshot) => {
   const orders = snapshot.val();
+  console.log("Pedidos desde Firebase:", orders);  // Esto te ayudará a ver cómo se están almacenando los pedidos
+
   document.querySelectorAll("table tbody").forEach(tbody => tbody.innerHTML = "");
 
   if (orders) {
@@ -84,11 +105,13 @@ onValue(ref(db, "pedidos"), (snapshot) => {
       const categoryOrders = orders[category];
       Object.keys(categoryOrders).forEach(orderId => {
         const order = categoryOrders[orderId];
+        console.log(`Agregando pedido a la tabla: ${orderId}`, order);  // Ver los pedidos antes de agregarlos a la tabla
         addOrderToTable(order, orderId, category);
       });
     });
   }
 });
+
 
 // Función para agregar los pedidos a la tabla
 function addOrderToTable(order, orderId, category) {
@@ -118,6 +141,7 @@ function addOrderToTable(order, orderId, category) {
         <option value="En Proceso" ${status === "En Proceso" ? "selected" : ""}>En Proceso</option>
         <option value="Entregado" ${status === "Entregado" ? "selected" : ""}>Entregado</option>
         <option value="No Entregado" ${status === "No Entregado" ? "selected" : ""}>No Entregado</option>
+        <option value="Eliminar" ${status === "Eliminar" ? "selected" : ""}>Eliminar</option>
       </select>
     </td>
   `;
@@ -179,12 +203,27 @@ function formatDate(dateString, timeString) {
 
 // Actualizar estado de un pedido
 function updateOrderStatus(category, orderId, order, newStatus) {
-  // Actualizar el estado en Firebase
+  // Verificar si el estado es "Eliminar"
+  if (newStatus === "Eliminar") {
+    // Eliminar el pedido de Firebase
+    remove(ref(db, `pedidos/${category}/${orderId}`))
+      .then(() => {
+        console.log(`Pedido ${orderId} eliminado de Firebase`);
+        // Eliminar la fila de la tabla en la UI
+        const row = document.querySelector(`[data-id="${orderId}"]`);
+        if (row) {
+          row.remove(); // Eliminar la fila de la tabla
+        }
+      })
+      .catch(error => console.error("Error al eliminar el pedido:", error));
+    return; // Salir de la función ya que no necesitamos más pasos
+  }
+
+  // Si el estado no es "Eliminar", actualizamos el estado del pedido
   update(ref(db, `pedidos/${category}/${orderId}`), { status: newStatus })
     .then(() => {
-      // Si el estado cambia a "Entregado" o "No Entregado"
+      // Si el estado cambia a "Entregado" o "No Entregado", moverlo al historial
       if (newStatus === "Entregado" || newStatus === "No Entregado") {
-        // Mover el pedido al historial
         push(ref(db, `historico/${category}`), {
           ...order, status: newStatus
         })
@@ -193,9 +232,6 @@ function updateOrderStatus(category, orderId, order, newStatus) {
           remove(ref(db, `pedidos/${category}/${orderId}`))
             .then(() => {
               // Aquí eliminamos el pedido de la tabla en la interfaz
-              // Esto es necesario porque Firebase no se actualiza en tiempo real
-              // en la vista hasta que recargue los datos.
-              // Aquí puedes agregar un código para eliminar la fila de la tabla en la UI.
               const row = document.querySelector(`[data-id="${orderId}"]`);
               if (row) {
                 row.remove(); // Eliminar la fila de la tabla
@@ -210,6 +246,7 @@ function updateOrderStatus(category, orderId, order, newStatus) {
       console.error("Error al actualizar el estado del pedido:", error);
     });
 }
+
 
 // Mover pedidos al historial
 function moveToHistory(category, orderId, order) {
@@ -402,3 +439,15 @@ document.addEventListener("keydown", (event) => {
     closeNotesPopup();
   }
 });
+
+
+function clearForm() {
+  document.getElementById("client").value = "";
+  document.getElementById("number").value = "";
+  document.getElementById("date").value = "";
+  document.getElementById("time").value = "";
+  document.getElementById("category").value = "";
+  document.getElementById("comanda").value = "";
+  document.getElementById("person").value = "";
+  document.getElementById("notes").value = "";
+}
